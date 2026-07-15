@@ -1,0 +1,111 @@
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'#TempStk') AND type in (N'U')) 
+DROP TABLE #TempStk; IF  EXISTS (SELECT * FROM tempdb..sysObjects WHERE Name = N'#TempStk') DROP TABLE Tempdb..#TempStk; WITH Hier (MainID, 
+ParentID) AS (SELECT DISTINCT GroupID, ParentGroupID FROM GroupMaster WHERE GroupID = 6 UNION ALL SELECT GroupID, ParentGroupID FROM GroupMaster AS 
+G JOIN Hier AS H ON H.MainID = ParentGroupID WHERE GroupID <> 6) SELECT * INTO #TempStk FROM Hier IF  EXISTS (SELECT * FROM sys.objects WHERE 
+object_id = OBJECT_ID(N'#Temp') AND type in (N'U')) DROP TABLE #Temp; IF  EXISTS (SELECT * FROM tempdb..sysObjects WHERE Name = N'#Temp') DROP TABLE Tempdb..#Temp; WITH Hier (MainID, ParentID) AS (SELECT DISTINCT GroupID, ParentGroupID FROM GroupMaster WHERE GroupID = 25 UNION ALL SELECT GroupID, ParentGroupID FROM GroupMaster AS G JOIN Hier AS H ON H.MainID = ParentGroupID WHERE GroupID <> 25) SELECT * INTO #Temp FROM Hier ; IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'#Temp1') AND type in (N'U')) DROP TABLE #Temp1; IF  EXISTS (SELECT * FROM tempdb..sysObjects WHERE Name = N'#Temp1') DROP TABLE Tempdb..#Temp1; WITH Hier (MainID, ParentID) AS (SELECT DISTINCT GroupID, ParentGroupID FROM GroupMaster WHERE GroupID = 2 UNION ALL SELECT GroupID, ParentGroupID FROM GroupMaster AS G JOIN Hier AS H ON H.MainID = ParentGroupID WHERE GroupID <> 2) SELECT * INTO #Temp1 FROM Hier ; IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'#Temp2') AND type in (N'U')) DROP TABLE #Temp2; IF  EXISTS (SELECT * FROM tempdb..sysObjects WHERE Name = N'#Temp2') DROP TABLE Tempdb..#Temp2; WITH Hier (MainID, ParentID) AS (SELECT DISTINCT GroupID, ParentGroupID FROM GroupMaster WHERE GroupID = 3 UNION ALL SELECT GroupID, ParentGroupID FROM GroupMaster AS G JOIN Hier AS H ON H.MainID = ParentGroupID WHERE GroupID <> 3) SELECT * INTO #Temp2 FROM Hier ; SELECT AccountName AS [Account_Name], GroupName AS [Group_Name], CONVERT(Decimal(16,2), ABS(Debitamount - CreditAmount)) AS [Balance], A.GroupID, AccountName, AccountID FROM (AccountMaster AS A INNER JOIN GroupMaster AS G ON A.GroupId = G.GroupID) INNER JOIN (SELECT * FROM #Temp UNION ALL SELECT * FROM #Temp1 UNION ALL SELECT * FROM #Temp2) AS G1 ON A.GroupID = G1.MainID INNER JOIN CityMaster AS C ON A.CityID = C.CityID INNER JOIN StateMaster AS S ON A.StateID = S.StateID WHERE  A.IsActive = 1 AND A.GroupID NOT IN (SELECT MainID FROM #TempStk)  ORDER BY [Account_Name], [Group_Name], [Balance]
+
+
+exec sp_executesql N'SELECT GroupID, CostCenter, BillWiseDetail From AccountMaster WHERE AccountID = @AccountID ',N'@AccountID nvarchar(4)',@AccountID=N'3472'
+
+UPDATE AutoNumber SET LastNumber = LastNumber + 1 WHERE TableName = 'transactionmaster' AND FieldName = 'SerialNumber'SELECT LastNumber FROM AutoNumber WHERE TableName = 'transactionmaster' AND FieldName = 'SerialNumber'
+
+SELECT VM.StartingNumber, VM.Prefix, FM.FormatType FROM VoucherMaster AS VM INNER JOIN FormatMaster AS FM ON VM.NumberSystemID = FM.FormatID WHERE VoucherID = 7
+
+SELECT ISNULL(MAX(VchNumber), 0) AS VchNumber FROM transactionmaster WHERE CONVERT(Char(10), VoucherDate, 102) BETWEEN CONVERT(char(10), convert(datetime, '1/1/2026 00:00'), 102) AND CONVERT(char(10), convert(datetime, '12/31/2026 23:59'), 102)  AND VoucherID = 7 AND CreateLocationID = (SELECT LocationID FROM Server)
+
+exec sp_executesql N'insert into transactionmaster(voucherdate,vchidprefix,vchidymd,vchnumber,userid,voucherid,narration,sessionid,isdeleted,createlocationid,locationid,modifylocationid,stationid,batchid,SerialNumber) values (@voucherdate,@vchidprefix,@vchidymd,@vchnumber,@userid,@voucherid,@narration,@sessionid,@isdeleted,@createlocationid,@locationid,@modifylocationid,@stationid,@batchid,@SerialNumber);',N'@voucherdate nvarchar(19),@vchidprefix nvarchar(4000),@vchidymd nvarchar(2),@vchnumber int,@userid nvarchar(1),@voucherid nvarchar(1),@narration nvarchar(8),@sessionid nvarchar(6),@isdeleted nvarchar(1),@createlocationid nvarchar(1),@locationid nvarchar(1),@modifylocationid nvarchar(1),@stationid nvarchar(1),@batchid nvarchar(6),@SerialNumber nvarchar(10)',@voucherdate=N'06/22/2026 18:52:40',@vchidprefix=N'',@vchidymd=N'26',@vchnumber=18,@userid=N'1',@voucherid=N'7',@narration=N'Aoe0et59',@sessionid=N'0003CR',@isdeleted=N'0',@createlocationid=N'1',@locationid=N'1',@modifylocationid=N'1',@stationid=N'1',@batchid=N'000001',@SerialNumber=N'32794.0001'
+
+
+exec sp_executesql N'insert into refmaster(serialnumber,accountid,toby,refdate,reftype,refname,duedate,debitamount,creditamount) values (@serialnumber,@accountid,@toby,@refdate,@reftype,@refname,@duedate,@debitamount,@creditamount);',N'@serialnumber nvarchar(10),@accountid nvarchar(4),@toby nvarchar(2),@refdate nvarchar(19),@reftype nvarchar(2),@refname nvarchar(4000),@duedate nvarchar(19),@debitamount nvarchar(1),@creditamount nvarchar(5)',@serialnumber=N'32794.0001',@accountid=N'3472',@toby=N'42',@refdate=N'06/22/2026 18:52:40',@reftype=N'47',@refname=N'',@duedate=N'06/22/2026 18:52:40',@debitamount=N'0',@creditamount=N'50000'
+
+
+exec sp_executesql N'insert into transactionchild(serialnumber,toby,accountid,contraid,debitamount,creditamount) values (@serialnumber,@toby,@accountid,@contraid,@debitamount,@creditamount);',N'@serialnumber nvarchar(10),@toby nvarchar(2),@accountid nvarchar(3),@contraid nvarchar(4),@debitamount nvarchar(5),@creditamount nvarchar(1)',@serialnumber=N'32794.0001',@toby=N'43',@accountid=N'543',@contraid=N'3472',@debitamount=N'50000',@creditamount=N'0'
+
+
+SELECT LocationID, SyncData, Parent FROM (SELECT L.LocationID, 0 AS SyncData, S.LocationID AS Parent FROM LocationMaster AS L LEFT JOIN (SELECT DS.LocationID FROM  Server AS S INNER JOIN (DataSendChild AS DS INNER JOIN LocationMaster AS L ON DS.DataSendID = L.DataSendID) ON S.LocationID = L.LocationID WHERE SyncData = 0 AND DataID = 0) AS D ON L.LocationID = D.LocationID, Server AS S WHERE D.LocationID IS NULL AND L.LocationID <> S.LocationID AND L.CreateMLData = 1 UNION ALL SELECT DS.LocationID,  1 AS SyncData, S.LocationID AS Parent FROM Server AS S INNER JOIN (DataSendChild AS DS INNER JOIN LocationMaster AS L ON DS.DataSendID = L.DataSendID) ON S.LocationID = L.LocationID WHERE SyncData = 1 AND DataID = 0 AND DS.LocationID <> S.LocationID AND L.CreateMLData = 1) AS X ORDER BY LocationID, SyncData DESC
+
+
+UPDATE AutoNumber SET LastNumber = LastNumber + 1 WHERE TableName = 'OutboxData' AND FieldName = 'ID'SELECT LastNumber FROM AutoNumber WHERE TableName = 'OutboxData' AND FieldName = 'ID'
+
+exec sp_executesql N'insert into outboxdata (ID, outboxxml, LocationID, Priority) values(@ID, @sXml, @LocationID, @Priority)',N'@ID float,@sXml nvarchar(1661),@LocationID nvarchar(2),@Priority int',@ID=33650.000099999997,@sXml=N'<Sql Version="2.0878">
+  <Insert Table="transactionmaster">
+    <voucherdate>06/22/2026 18:52:40</voucherdate>
+    <vchidprefix></vchidprefix>
+    <vchidymd>26</vchidymd>
+    <vchnumber>18</vchnumber>
+    <userid>1</userid>
+    <voucherid>7</voucherid>
+    <narration>Aoe0et59</narration>
+    <sessionid>0003CR</sessionid>
+    <isdeleted>0</isdeleted>
+    <createlocationid>1</createlocationid>
+    <locationid>1</locationid>
+    <modifylocationid>1</modifylocationid>
+    <stationid>1</stationid>
+    <batchid>000001</batchid>
+    <SerialNumber>32794.0001</SerialNumber>
+  </Insert>
+  <Insert Table="transactionchild" IDColumnName="SrlNo" GenID8Remote="Yes">
+    <serialnumber>32794.0001</serialnumber>
+    <accountid>3472</accountid>
+    <contraid>543</contraid>
+    <toby>42</toby>
+    <debitamount>0</debitamount>
+    <creditamount>50000</creditamount>
+    <assessablevalue>0</assessablevalue>
+    <narration></narration>
+  </Insert>
+  <Insert Table="refmaster" IDColumnName="SrlNo" GenID8Remote="Yes">
+    <serialnumber>32794.0001</serialnumber>
+    <accountid>3472</accountid>
+    <toby>42</toby>
+    <refdate>06/22/2026 18:52:40</refdate>
+    <reftype>47</reftype>
+    <refname></refname>
+    <duedate>06/22/2026 18:52:40</duedate>
+    <debitamount>0</debitamount>
+    <creditamount>50000</creditamount>
+  </Insert>
+  <Insert Table="transactionchild" IDColumnName="SrlNo" GenID8Remote="Yes">
+    <serialnumber>32794.0001</serialnumber>
+    <toby>43</toby>
+    <accountid>543</accountid>
+    <contraid>3472</contraid>
+    <debitamount>50000</debitamount>
+    <creditamount>0</creditamount>
+  </Insert>
+</Sql>',@LocationID=N'15',@Priority=0
+
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; SELECT Symbol,FormalName, SymbolForDecimalPortion FROM CurrencyMaster WHERE CurrencyID IN (SELECT CurrencyID FROM LocationMaster WHERE LocationID=1); SELECT L.ShowCP FROM LocationMaster AS L INNER JOIN Server AS S ON S.LocationID = L.LocationID
+
+
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; SELECT X.*, Y.* FROM (SELECT M.VoucherDate, (CASE WHEN VchIdPrefix <> '' THEN VchIdPrefix + '/' ELSE '' END) + (CASE WHEN DataLength(VchIDYMD) > 2 THEN VchIDYMD + '/' ELSE '' END) +  CONVERT(Char, VchNumber) AS VchID, M.VchIDPrefix, M.VchIDYMD, 
+M.VchNumber, VM.VoucherName, M.VoucherID, VM.VoucherTypeID, M.Narration, L.LocationName AS CreateLocation, ML.LocationName AS ModifyLocation, 
+CL.LocationName AS ForLocation, CL.CompanyName, CM.Symbol AS Currency_Symbol, CM.FormalName AS Currency_Name, CL.StreetNumber AS Comp_Street_No, 
+(CASE WHEN CL.StreetName<>'[NONE]' THEN CL.StreetName ELSE '' END) AS Comp_Street, (CASE WHEN CL.LocalityName<>'[NONE]' THEN CL.LocalityName ELSE '' END) AS Comp_Locality, Cl.Address1 AS Comp_Add1, Cl.Address2 AS Comp_Add2, Cl.Address3 AS Comp_Add3, (CASE WHEN City.CityName <> '[NONE]' THEN City.CityName ELSE '' END) AS Comp_City, (CASE WHEN State.StateName <> '[NONE]' THEN State.StateName ELSE '' END) AS Comp_State, ROW_Number() OVER (ORDER BY M.SerialNumber, C.SrlNo) AS DataRowNumber, (CASE WHEN Coun.CountryName <> '[NONE]' THEN Coun.CountryName ELSE '' END) AS Comp_Country, CL.Pincode AS Comp_Pincode, CL.Phone AS Comp_Phone, CL.EMail AS Comp_EMail, CL.Website AS Comp_Website, CL.PanNo AS Comp_PANNo, CL.CSTNo AS Comp_CSTNo, CL.VATNo AS Comp_VATNo, CL.GSTINNo AS Comp_GSTINNo, CL.ServiceTaxNo AS Comp_ServiceTaxNo, ToBy.FormatType AS ToBy, AM.AccountName AS Account, AM.GroupID AS GroupID, (CASE WHEN CC.CostCenterName <> '[NONE]' THEN CC.CostCenterName ELSE '' END) AS CostCenter, C.DebitAmount AS DrAmt,  C.CreditAmount AS CrAmt, C.AssessableValue, C.Narration AS [Line Narration], C.AccountID, M.UDFField1 AS [UDF 1], M.UDFField2 AS [UDF 2], M.UDFField3 AS [UDF 3], M.UDFField4 AS [UDF 4], M.UDFField5 AS [UDF 5], M.UDFField6 AS [UDF 6], M.UDFField7 AS [UDF 7],  M.UDFField8 AS [UDF 8], M.UDFField9 AS [UDF 9], M.UDFField10 AS [UDF 10], M.Link, U.PrintName as [User Name], M.SerialNumber, C.SrlNo, SM10.StationName AS [Vch Station] FROM ((((TransactionMaster AS M INNER JOIN ((((LocationDetail AS CL INNER JOIN CityMaster AS City ON City.CityID = CL.CityID) INNER JOIN StateMaster AS State ON State.StateID = City.StateID) INNER JOIN CountryMaster AS Coun ON Coun.CountryID = State.CountryID) INNER JOIN CurrencyMaster AS CM ON CM.CurrencyID = CL.CurrencyID) ON CL.LocationID = M.LocationID) INNER JOIN LocationMaster AS ML ON ML.LocationID = M.ModifyLocationID) INNER JOIN LocationMaster AS L ON L.LocationID = M.CreateLocationID) INNER JOIN VoucherMaster AS VM ON VM.VoucherID = M.VoucherID) INNER JOIN (((TransactionChild AS C INNER JOIN AccountMaster AS AM ON C.AccountID = AM.AccountID) INNER JOIN CostCenterMaster AS CC ON C.CostCenterID = 
+CC.CostCenterID) INNER JOIN FormatMaster AS ToBY ON C.ToBy = ToBy.FormatID) ON M.SerialNumber = C.SerialNumber INNER JOIN UserMaster AS U ON 
+U.UserID = M.UserID INNER JOIN StationMaster AS SM10 ON SM10.StationID = M.StationID WHERE M.SerialNumber = 32794.0001) AS X, (SELECT N'' AS 
+[Header1], N'' AS [Header], N'Receipt Voucher' AS [Doctitle], N'' AS [Footer], 'Fifty  Thousand  Kenya Shillings Only' AS [AmtInWord], '50000.000' 
+AS CreditAmount, '50000.000' AS DebitAmount, CONVERT(Decimal(18, 2), '50000.000') AS CrAmtM , 'Claude Anthropic' AS ACNameM, 'Fifty  Thousand  Kenya 
+Shillings Only' AS CreditAmtInWordM, N'Kshs' AS [Symbol], N'Kenya Shillings' AS [FormalName],N'Cents' AS [DecimalSymbol], 'dd-MMM-yyyy' AS 
+[DateFormat], 'hh:mm tt' AS [TimeFormat], '###0.00' AS [RateAmtFormat], '22-Jun-2026' AS PrintDate, '06:52 pm' AS PrintTime) AS Y ORDER BY 
+X.SrlNo;Select C.SerialNumber, IsNull(CT.AccountID,1) As AccountID, IsNull(CM.CostCenterName,'') As CostCenter, CONVERT(Decimal(18, 2), 
+IsNull(CT.DebitAmount,0)) AS DebitAmount , CONVERT(Decimal(18, 2), IsNull(CT.CreditAmount,0)) AS Creditamount , IsNull(FM.FormatType,'') As 
+FormatType From TransactionChild As C  Inner Join ((CostCenterTransaction As CT Inner Join FormatMaster As FM On CT.ToBy=FM.FormatID) Inner Join 
+CostCenterMaster As CM On CT.CostCenterID=CM.CostCenterID) On C.SerialNumber=CT.SerialNumber AND C.AccountID = CT.AccountID Where 
+C.SerialNumber=32794.0001;Select R.SerialNumber, R.AccountID, RToBy.FormatType As ToBy, RefType.FormatType, R.RefName, R.RefDate, 
+ISNULL(R1.OriginalRefDate, R.RefDate) AS OriginalRefDate, CONVERT(Decimal(18, 2), R.DebitAmount) AS R_DebitAmount , CONVERT(Decimal(18, 2), 
+R.CreditAmount) AS R_CreditAmount  From TransactionChild As C  Inner Join ((RefMaster AS R INNER JOIN FormatMaster AS RToBY ON R.ToBy = 
+RToBy.FormatID) INNER JOIN FormatMaster AS RefType ON R.RefType = RefType.FormatID) ON C.SerialNumber = R.SerialNumber AND C.AccountID = R.AccountID LEFT JOIN (SELECT AccountID, RefName, MIN(RefDate) AS OriginalRefDate FROM RefMaster GROUP BY AccountID, RefName) AS R1 ON R1.AccountID = R.AccountID AND R1.RefName = R.RefName  Where C.SerialNumber=32794.0001; SELECT S.SessionID AS [Session ID], U.UserName AS [User], S.WindowsUser AS [Windows User], S.ComputerName AS [Computer Name], L.LocationName As [Location], LM.CompanyName, LM.Address1 AS Comp_Add1, LM.Address2 AS Comp_Add2, LM.Address3 AS Comp_Add3, (CASE WHEN LM.CityName<>'[NONE]' THEN LM.CityName ELSE '' END) AS Comp_City, (CASE WHEN LM.StateName<>'[NONE]' THEN LM.StateName ELSE '' END) AS Comp_State, (CASE WHEN LM.CountryName<>'[NONE]' THEN LM.[CountryName] ELSE '' END) AS Comp_Country, LM.Pincode AS Comp_Pincode, LM.Phone AS Comp_Phone, LM.VatNo AS Comp_VatNo, LM.CSTNo AS Comp_CSTNo, LM.ServiceTaxNo AS Comp_ServiceTaxNo, LM.CurrencySymbol, LM.CurrencyName, LM.RegionName AS Comp_Region, LM.Email AS Comp_Email, LM.Website AS Comp_Website, LM.Remarks AS Comp_Remarks, LM.PanNo AS Comp_PANNo, LM.StreetNumber Comp_StreetNumber, (CASE WHEN LM.StreetName<>'[NONE]' THEN LM.StreetName ELSE '' END) AS Comp_StreetName, (CASE WHEN LM.LocalityName<>'[NONE]' THEN LM.LocalityName ELSE '' END) AS Comp_LocalityName, LM.LMField1 AS Comp_Field1, LM.LMField2 AS Comp_Field2, LM.LMField3 AS Comp_Field3, LM.LMField4 AS Comp_Field4, LM.LMField5 AS Comp_Field5, LM.LMField6 AS Comp_Field6, LM.LMField7 AS Comp_Field7, LM.LMField8 AS Comp_Field8, LM.LMField9 AS Comp_Field9, LM.LMField10 AS Comp_Field10, LM.GSTINNo AS Comp_GSTINNo FROM (SELECT * FROM SessionMaster WHERE SessionID = '0003CR') AS S INNER JOIN UserMaster AS U ON U.UserID = S.UserID INNER JOIN LocationMaster AS L ON L.LocationID = S.LocationID, (SELECT LocationID AS LocationID FROM TransactionMaster WHERE SerialNumber = 32794.0001) AS H INNER JOIN LocationDetail AS LM ON LM.LocationID = H.LocationID 
+
+
+
+
+
+
+
+
+
+
+
+

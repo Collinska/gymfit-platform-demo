@@ -1,0 +1,571 @@
+exec sp_executesql N'SELECT CD.CustomerName, CD.CompanyName, CD.Address1, CD.Address2, CD.Address3, CD.CityName, CD.CityID, CD.StateName, CD.StateID, CD.CountryName, CD.CountryID, CD.Pincode,CD.Address1A, CD.Address2A, CD.Address3A, CD.CityNameA, CD.CityIDA, CD.StateNameA, CD.StateIDA, CD.CountryNameA, CD.CountryIDA, CD.PincodeA, CD.OnSaleValue, (CASE WHEN CD.IsActive=1 THEN CD.PointAwarded ELSE 0 END) AS PointAwarded, CD.RoundOffID, CD.RoundingLimit, CD.ExtraPointOnBDay, CD.CalcExtraPointMethod, CD.MarginDays, (CASE WHEN LinkIsActive = 1 THEN CD.PointToLinkedCustomer ELSE 0 END) AS PointToLinkedCustomer, CD.LinkID, CD.BirthDate, CD.AnniversaryDate, CD.IsActive, CD.CardIssueDate, CD.CardExpiryDate, CD.LinkIsActive, CD.AllowDiscOnSG, CD.LinkCardIssueDate, CD.LinkCardExpiryDate, CD.PriceListID, CD.PriceListName, CD.AccountID,AM.CreditDays, CD.DiscountPercent, CD.MultiplyPointBy, CD.WeekDays, CD.FromTime, CD.ToTime, CD.RestrictedSG, CD.AllowDiscOnSG, CD.StreetNumber, CD.StreetID, CD.StreetName, CD.LocalityId, CD.LocalityName, CD.StreetNumberA, CD.StreetIDA, CD.StreetNameA, CD.LocalityIdA, CD.LocalityNameA, CD.MinBillAmt, CD.DeliveryCharge, CD.Distance, CD.MinBillAmtA, CD.DeliveryChargeA, CD.DistanceA, CD.CardTypeID, CD.ExcludeTaxInPoint, CD.PointAwardedOnProduct, CD.GSTINNo, CD.BusinessType, (CASE WHEN CD.ReferralPointAwarded = 0 THEN CD.ReferralPoint ELSE 0 END) AS ReferralPoint, CD.ReferralPointAwarded, CD.Mobile, CD.VisitPoint, CD.VisitCount FROM CustomerDetail CD inner join AccountMaster AM on AM.AccountID=CD.AccountID WHERE CustomerID = @CustomerID ',N'@CustomerID nvarchar(5)',@CustomerID=N'00243'
+
+
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'#Temp1') AND type in (N'U')) DROP TABLE #Temp1; IF  EXISTS (SELECT * FROM tempdb..sysObjects WHERE Name = N'#Temp1') DROP TABLE Tempdb..#Temp1; WITH Hier (MainID, ParentID) AS (SELECT DISTINCT GroupID, ParentGroupID FROM GroupMaster WHERE GroupID = 23 UNION ALL SELECT GroupID, ParentGroupID FROM GroupMaster AS G JOIN Hier AS H ON H.MainID = ParentGroupID WHERE GroupID <> 23) SELECT * INTO #Temp1 FROM Hier ; IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'#Temp2') AND type in (N'U')) DROP TABLE #Temp2; IF  EXISTS (SELECT * FROM tempdb..sysObjects WHERE Name = N'#Temp2') DROP TABLE Tempdb..#Temp2; WITH Hier (MainID, ParentID) AS (SELECT DISTINCT GroupID, ParentGroupID FROM GroupMaster WHERE GroupID = 8 UNION ALL SELECT GroupID, ParentGroupID FROM GroupMaster AS G JOIN Hier AS H ON H.MainID = ParentGroupID WHERE GroupID <> 8) SELECT * INTO #Temp2 FROM Hier ; Select CM.AllowCreditSale, AM.CreditLimit - (CASE WHEN AM.CreditLimit = 0 THEN 0 WHEN AM.CreditLimit - (AM.DebitAmount - AM.CreditAmount) = 0 THEN AM.CreditLimit + 0.01 ELSE (AM.DebitAmount - AM.CreditAmount) END) AS CreditLimit,AM.CreditDays,Am.Accountid AS Balance from  CustomerMaster CM inner join AccountMaster AM on AM.Accountid=CM.AccountId where CM.AccountId<>1 AND Am.GroupId in (SELECT MainID FROM #Temp1 UNION ALL SELECT MainID FROM #Temp2) AND CM.CustomerId= '00243'
+
+
+UPDATE CustomerMaster SET VisitCount = VisitCount + 1 WHERE CustomerID = '00243';
+
+UPDATE AutoNumber SET LastNumber = LastNumber + 1 WHERE TableName = 'saleheader' AND FieldName = 'SerialNumber'SELECT LastNumber FROM AutoNumber WHERE TableName = 'saleheader' AND FieldName = 'SerialNumber'
+
+SELECT VM.StartingNumber, VM.Prefix, FM.FormatType FROM VoucherMaster AS VM INNER JOIN FormatMaster AS FM ON VM.NumberSystemID = FM.FormatID WHERE VoucherID = 14
+
+SELECT ISNULL(MAX(VchNumber), 0) AS VchNumber FROM saleheader WHERE CONVERT(Char(10), VoucherDate, 102) BETWEEN CONVERT(char(10), convert(datetime, '1/1/2026 00:00'), 102) AND CONVERT(char(10), convert(datetime, '12/31/2026 23:59'), 102)  AND VoucherID = 14 AND CreateLocationID = (SELECT LocationID FROM Server)
+
+exec sp_executesql N'insert into saleheader(voucherdate,vchidprefix,vchnumber,vchidymd,layoutid,datetimein,voucherid,companyname,streetnumber,streetid,localityid,address1,address2,address3,cityid,stateid,countryid,pincode,billreference,deliverytype,addresstype,packages,duedate,remarks,gstinnumbercustomer,businesstype,tablename,tagoftable,noofpax,driverid,reservationid,customerid,linkcustomerid,billamount,saleaccountid,userid,sessionid,pricelistid,createlocationid,locationid,placeofsupply,modifylocationid,qtytotal,subtotal,taxtotal,status,salemode,roundoffamt,servicemodeid,mobiwallet,stationid,batchid,SerialNumber) 
+values 
+(@voucherdate,@vchidprefix,@vchnumber,@vchidymd,@layoutid,@datetimein,@voucherid,@companyname,@streetnumber,@streetid,@localityid,@address1,@address2,@address3,@cityid,@stateid,@countryid,@pincode,@billreference,@deliverytype,@addresstype,@packages,@duedate,@remarks,@gstinnumbercustomer,@businesstype,@tablename,@tagoftable,@noofpax,@driverid,@reservationid,@customerid,@linkcustomerid,@billamount,@saleaccountid,@userid,@sessionid,@pricelistid,@createlocationid,@locationid,@placeofsupply,@modifylocationid,@qtytotal,@subtotal,@taxtotal,@status,@salemode,@roundoffamt,@servicemodeid,@mobiwallet,@stationid,@batchid,@SerialNumber);',N'@voucherdate 
+nvarchar(16),@vchidprefix nvarchar(10),@vchnumber int,@vchidymd nvarchar(2),@layoutid nvarchar(2),@datetimein nvarchar(16),@voucherid 
+nvarchar(2),@companyname nvarchar(17),@streetnumber nvarchar(4000),@streetid nvarchar(1),@localityid nvarchar(1),@address1 nvarchar(4000),@address2 
+nvarchar(4000),@address3 nvarchar(4000),@cityid nvarchar(1),@stateid nvarchar(1),@countryid nvarchar(1),@pincode nvarchar(4000),@billreference nvarchar(4000),@deliverytype nvarchar(2),@addresstype nvarchar(3),@packages nvarchar(1),@duedate nvarchar(10),@remarks nvarchar(4000),@gstinnumbercustomer nvarchar(4000),@businesstype nvarchar(3),@tablename nvarchar(6),@tagoftable nvarchar(4000),@noofpax nvarchar(1),@driverid nvarchar(1),@reservationid nvarchar(4000),@customerid nvarchar(5),@linkcustomerid nvarchar(5),@billamount nvarchar(4),@saleaccountid nvarchar(1),@userid nvarchar(1),@sessionid nvarchar(6),@pricelistid nvarchar(1),@createlocationid nvarchar(1),@locationid nvarchar(1),@placeofsupply nvarchar(1),@modifylocationid nvarchar(1),@qtytotal nvarchar(1),@subtotal nvarchar(7),@taxtotal nvarchar(6),@status nvarchar(1),@salemode nvarchar(1),@roundoffamt nvarchar(1),@servicemodeid nvarchar(1),@mobiwallet nvarchar(4000),@stationid nvarchar(1),@batchid nvarchar(6),@SerialNumber nvarchar(10)',@voucherdate=N'06/22/2026 19:09',@vchidprefix=N'14523.0001',@vchnumber=1,@vchidymd=N'26',@layoutid=N'37',@datetimein=N'06/22/2026 19:09',@voucherid=N'14',@companyname=N'Anthropic Studios',@streetnumber=N'',@streetid=N'1',@localityid=N'1',@address1=N'',@address2=N'',@address3=N'',@cityid=N'1',@stateid=N'1',@countryid=N'1',@pincode=N'',@billreference=N'',@deliverytype=N'77',@addresstype=N'648',@packages=N'0',@duedate=N'06/22/2026',@remarks=N'',@gstinnumbercustomer=N'',@businesstype=N'848',@tablename=N'MEMBER',@tagoftable=N'',@noofpax=N'1',@driverid=N'0',@reservationid=N'',@customerid=N'00243',@linkcustomerid=N'00001',@billamount=N'6970',@saleaccountid=N'3',@userid=N'1',@sessionid=N'0003CR',@pricelistid=N'1',@createlocationid=N'1',@locationid=N'1',@placeofsupply=N'2',@modifylocationid=N'1',@qtytotal=N'2',@subtotal=N'6970.00',@taxtotal=N'961.38',@status=N'0',@salemode=N'1',@roundoffamt=N'0',@servicemodeid=N'1',@mobiwallet=N'',@stationid=N'1',@batchid=N'000001',@SerialNumber=N'14523.0001'
+
+
+UPDATE AutoNumber SET LastNumber = LastNumber + 1 WHERE TableName = 'restkot' AND FieldName = 'SerialNumber'SELECT LastNumber FROM AutoNumber WHERE TableName = 'restkot' AND FieldName = 'SerialNumber'
+
+SELECT ISNULL(MAX(NewKOTNumber), 0) AS VchNumber FROM restkot WHERE CONVERT(Char(10), KOTDateTime, 102) BETWEEN CONVERT(char(10), convert(datetime, '1/1/2026 00:00'), 102) AND CONVERT(char(10), convert(datetime, '12/31/2026 23:59'), 102)  AND CreateLocationID = (SELECT LocationID FROM Server)
+
+exec sp_executesql N'insert into restkot(kotdatetime,deliverydatetime,createlocationid,locationid,modifylocationid,sessionid,kotidprefix,kotidymd,newkotnumber,SerialNumber) values (@kotdatetime,@deliverydatetime,@createlocationid,@locationid,@modifylocationid,@sessionid,@kotidprefix,@kotidymd,@newkotnumber,@SerialNumber);',N'@kotdatetime nvarchar(16),@deliverydatetime nvarchar(16),@createlocationid nvarchar(1),@locationid nvarchar(1),@modifylocationid nvarchar(1),@sessionid nvarchar(6),@kotidprefix nvarchar(4000),@kotidymd nvarchar(2),@newkotnumber int,@SerialNumber nvarchar(10)',@kotdatetime=N'06/22/2026 19:09',@deliverydatetime=N'06/22/2026 19:09',@createlocationid=N'1',@locationid=N'1',@modifylocationid=N'1',@sessionid=N'0003CR',@kotidprefix=N'',@kotidymd=N'26',@newkotnumber=4,@SerialNumber=N'14513.0001'
+
+exec sp_executesql N'insert into saledetail(serialnumber,saletype,productid,childid,locationcode,modifierproductid,quantity,mrp,warehouseid,salerate,remarks,salespersonid,taxid,taxrate,includeinrate,taxid1,taxrate1,taxamount1,taxablevalue1,taxid2,taxrate2,taxamount2,taxablevalue2,taxid3,taxrate3,taxamount3,taxablevalue3,taxid4,taxrate4,taxamount4,taxablevalue4,discountproduct,discountmanual,discountfinal,schemeid,schemediscpercent,schemediscamt,pricelistdiscount,seatid,userid,voiduserid,userstationid,ordernumber,finalsalerate,isprinted,printerid,stationid,menuid,kotnumber,cancellationreasonid,alternateunitid,conversionfactor,unitid,perunitid,inputrateunitid,inputrate,inputrateperqty,spcommpercent,spcommamt) 
+values 
+(@serialnumber,@saletype,@productid,@childid,@locationcode,@modifierproductid,@quantity,@mrp,@warehouseid,@salerate,@remarks,@salespersonid,@taxid,@taxrate,@includeinrate,@taxid1,@taxrate1,@taxamount1,@taxablevalue1,@taxid2,@taxrate2,@taxamount2,@taxablevalue2,@taxid3,@taxrate3,@taxamount3,@taxablevalue3,@taxid4,@taxrate4,@taxamount4,@taxablevalue4,@discountproduct,@discountmanual,@discountfinal,@schemeid,@schemediscpercent,@schemediscamt,@pricelistdiscount,@seatid,@userid,@voiduserid,@userstationid,@ordernumber,@finalsalerate,@isprinted,@printerid,@stationid,@menuid,@kotnumber,@cancellationreasonid,@alternateunitid,@conversionfactor,@unitid,@perunitid,@inputrateunitid,@inputrate,@inputrateperqty,@spcommpercent,@spcommamt);',N'@serialnumber 
+nvarchar(10),@saletype nvarchar(1),@productid nvarchar(4),@childid nvarchar(4),@locationcode nvarchar(3),@modifierproductid nvarchar(4),@quantity 
+nvarchar(1),@mrp nvarchar(4),@warehouseid nvarchar(1),@salerate nvarchar(4),@remarks nvarchar(4000),@salespersonid nvarchar(1),@taxid 
+nvarchar(1),@taxrate nvarchar(6),@includeinrate nvarchar(4),@taxid1 nvarchar(3),@taxrate1 nvarchar(9),@taxamount1 nvarchar(6),@taxablevalue1 
+nvarchar(7),@taxid2 nvarchar(1),@taxrate2 nvarchar(1),@taxamount2 nvarchar(4),@taxablevalue2 nvarchar(4),@taxid3 nvarchar(1),@taxrate3 
+nvarchar(1),@taxamount3 nvarchar(4),@taxablevalue3 nvarchar(4),@taxid4 nvarchar(1),@taxrate4 nvarchar(1),@taxamount4 nvarchar(4),@taxablevalue4 nvarchar(4),@discountproduct nvarchar(4),@discountmanual nvarchar(6),@discountfinal nvarchar(4),@schemeid nvarchar(1),@schemediscpercent nvarchar(4),@schemediscamt nvarchar(4),@pricelistdiscount nvarchar(4),@seatid nvarchar(1),@userid nvarchar(1),@voiduserid nvarchar(1),@userstationid nvarchar(1),@ordernumber nvarchar(4000),@finalsalerate nvarchar(13),@isprinted nvarchar(1),@printerid nvarchar(1),@stationid nvarchar(1),@menuid nvarchar(2),@kotnumber nvarchar(10),@cancellationreasonid nvarchar(1),@alternateunitid nvarchar(1),@conversionfactor nvarchar(1),@unitid nvarchar(1),@perunitid nvarchar(1),@inputrateunitid nvarchar(1),@inputrate nvarchar(4),@inputrateperqty nvarchar(1),@spcommpercent nvarchar(1),@spcommamt nvarchar(1)',@serialnumber=N'14523.0001',@saletype=N'4',@productid=N'000E',@childid=N'0000',@locationcode=N'000',@modifierproductid=N'000E',@quantity=N'1',@mrp=N'6950',@warehouseid=N'1',@salerate=N'6950',@remarks=N'',@salespersonid=N'1',@taxid=N'3',@taxrate=N'16.000',@includeinrate=N'True',@taxid1=N'571',@taxrate1=N'13.793103',@taxamount1=N'958.62',@taxablevalue1=N'5991.38',@taxid2=N'0',@taxrate2=N'0',@taxamount2=N'0.00',@taxablevalue2=N'0.00',@taxid3=N'0',@taxrate3=N'0',@taxamount3=N'0.00',@taxablevalue3=N'0.00',@taxid4=N'0',@taxrate4=N'0',@taxamount4=N'0.00',@taxablevalue4=N'0.00',@discountproduct=N'0.00',@discountmanual=N'0.0000',@discountfinal=N'0.00',@schemeid=N'1',@schemediscpercent=N'0.00',@schemediscamt=N'0.00',@pricelistdiscount=N'0.00',@seatid=N'1',@userid=N'1',@voiduserid=N'0',@userstationid=N'1',@ordernumber=N'',@finalsalerate=N'6950.00000000',@isprinted=N'0',@printerid=N'1',@stationid=N'1',@menuid=N'13',@kotnumber=N'14513.0001',@cancellationreasonid=N'0',@alternateunitid=N'1',@conversionfactor=N'1',@unitid=N'1',@perunitid=N'1',@inputrateunitid=N'1',@inputrate=N'6950',@inputrateperqty=N'1',@spcommpercent=N'0',@spcommamt=N'0'
+
+exec sp_executesql N'insert into saledetail(serialnumber,saletype,productid,childid,locationcode,modifierproductid,quantity,mrp,warehouseid,salerate,remarks,salespersonid,taxid,taxrate,includeinrate,taxid1,taxrate1,taxamount1,taxablevalue1,taxid2,taxrate2,taxamount2,taxablevalue2,taxid3,taxrate3,taxamount3,taxablevalue3,taxid4,taxrate4,taxamount4,taxablevalue4,discountproduct,discountmanual,discountfinal,schemeid,schemediscpercent,schemediscamt,pricelistdiscount,seatid,userid,voiduserid,userstationid,ordernumber,finalsalerate,isprinted,printerid,stationid,menuid,kotnumber,cancellationreasonid,alternateunitid,conversionfactor,unitid,perunitid,inputrateunitid,inputrate,inputrateperqty,spcommpercent,spcommamt) 
+values 
+(@serialnumber,@saletype,@productid,@childid,@locationcode,@modifierproductid,@quantity,@mrp,@warehouseid,@salerate,@remarks,@salespersonid,@taxid,@taxrate,@includeinrate,@taxid1,@taxrate1,@taxamount1,@taxablevalue1,@taxid2,@taxrate2,@taxamount2,@taxablevalue2,@taxid3,@taxrate3,@taxamount3,@taxablevalue3,@taxid4,@taxrate4,@taxamount4,@taxablevalue4,@discountproduct,@discountmanual,@discountfinal,@schemeid,@schemediscpercent,@schemediscamt,@pricelistdiscount,@seatid,@userid,@voiduserid,@userstationid,@ordernumber,@finalsalerate,@isprinted,@printerid,@stationid,@menuid,@kotnumber,@cancellationreasonid,@alternateunitid,@conversionfactor,@unitid,@perunitid,@inputrateunitid,@inputrate,@inputrateperqty,@spcommpercent,@spcommamt);',N'@serialnumber 
+nvarchar(10),@saletype nvarchar(1),@productid nvarchar(4),@childid nvarchar(4),@locationcode nvarchar(3),@modifierproductid nvarchar(4),@quantity 
+nvarchar(1),@mrp nvarchar(2),@warehouseid nvarchar(1),@salerate nvarchar(2),@remarks nvarchar(4000),@salespersonid nvarchar(1),@taxid 
+nvarchar(1),@taxrate nvarchar(6),@includeinrate nvarchar(4),@taxid1 nvarchar(3),@taxrate1 nvarchar(9),@taxamount1 nvarchar(4),@taxablevalue1 
+nvarchar(5),@taxid2 nvarchar(1),@taxrate2 nvarchar(1),@taxamount2 nvarchar(4),@taxablevalue2 nvarchar(4),@taxid3 nvarchar(1),@taxrate3 
+nvarchar(1),@taxamount3 nvarchar(4),@taxablevalue3 nvarchar(4),@taxid4 nvarchar(1),@taxrate4 nvarchar(1),@taxamount4 nvarchar(4),@taxablevalue4 nvarchar(4),@discountproduct nvarchar(4),@discountmanual nvarchar(6),@discountfinal nvarchar(4),@schemeid nvarchar(1),@schemediscpercent nvarchar(4),@schemediscamt nvarchar(4),@pricelistdiscount nvarchar(4),@seatid nvarchar(1),@userid nvarchar(1),@voiduserid nvarchar(1),@userstationid nvarchar(1),@ordernumber nvarchar(4000),@finalsalerate nvarchar(11),@isprinted nvarchar(1),@printerid nvarchar(1),@stationid nvarchar(1),@menuid nvarchar(2),@kotnumber nvarchar(10),@cancellationreasonid nvarchar(1),@alternateunitid nvarchar(1),@conversionfactor nvarchar(1),@unitid nvarchar(1),@perunitid nvarchar(1),@inputrateunitid nvarchar(1),@inputrate nvarchar(2),@inputrateperqty nvarchar(1),@spcommpercent nvarchar(1),@spcommamt nvarchar(1)',@serialnumber=N'14523.0001',@saletype=N'4',@productid=N'000K',@childid=N'0000',@locationcode=N'000',@modifierproductid=N'000K',@quantity=N'1',@mrp=N'20',@warehouseid=N'1',@salerate=N'20',@remarks=N'',@salespersonid=N'1',@taxid=N'3',@taxrate=N'16.000',@includeinrate=N'True',@taxid1=N'571',@taxrate1=N'13.793103',@taxamount1=N'2.76',@taxablevalue1=N'17.24',@taxid2=N'0',@taxrate2=N'0',@taxamount2=N'0.00',@taxablevalue2=N'0.00',@taxid3=N'0',@taxrate3=N'0',@taxamount3=N'0.00',@taxablevalue3=N'0.00',@taxid4=N'0',@taxrate4=N'0',@taxamount4=N'0.00',@taxablevalue4=N'0.00',@discountproduct=N'0.00',@discountmanual=N'0.0000',@discountfinal=N'0.00',@schemeid=N'1',@schemediscpercent=N'0.00',@schemediscamt=N'0.00',@pricelistdiscount=N'0.00',@seatid=N'1',@userid=N'1',@voiduserid=N'0',@userstationid=N'1',@ordernumber=N'',@finalsalerate=N'20.00000000',@isprinted=N'0',@printerid=N'1',@stationid=N'1',@menuid=N'13',@kotnumber=N'14513.0001',@cancellationreasonid=N'0',@alternateunitid=N'1',@conversionfactor=N'1',@unitid=N'1',@perunitid=N'1',@inputrateunitid=N'1',@inputrate=N'20',@inputrateperqty=N'1',@spcommpercent=N'0',@spcommamt=N'0'
+
+SELECT M.ProductID, isNull(ST.WarehouseID,1) as WarehouseID, isNull(St.LocationID,1) as LocationID, IsNull((CASE WHEN SUM(ST.Quantity)<0 THEN 0 ELSE SUM(ST.Quantity) END),0) AS Qty, Convert(decimal(10,2), 0) as UsedQty FROM (SELECT DISTINCT RC.ProductID FROM RestMenuMaster AS RM INNER JOIN RestMenuChild AS RC ON RM.MenuID = RC.MenuID WHERE RM.IsActive = 1 AND RC.CheckStock = 57) AS M LEFT JOIN Stock AS ST ON ST.ProductID = M.ProductID GROUP BY M.ProductID, ST.WarehouseID, St.LocationID 
+
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; SELECT * FROM CurrencyMaster; SELECT * FROM PrinterRedirectMaster; SELECT * FROM OPOSMaster; SELECT * FROM StationMaster; Select * from LocationMaster
+
+SELECT * FROM ( select 0 as SerialNumber,0 as VoucherId,0 as VoucherTypeId,0 VoucherName, MOP.MOPID,(CASE WHEN MOP.MOPtypeID=10 AND MOP.ExchangeRate = 0 THEN '' ELSE MOP.MOPName END) AS MOPName,':' as Separator, CONVERT(decimal(5,2), '0') as XValue, 
+MOP.CustomerInfo,MOP.DocumentNumber,MOP.BankName,MOP.CRMPoints,MOP.DirectTender,MOP.MOPTypeId,MOP.AccountId,'' as RefName,'' as TipSeparator, 
+MOP.IsTIPAllowed as isTipAllowed,CONVERT(decimal(5,2), '0') as TipValue,MOP.ExchangeRate,VendorID as 
+[CardVendor],MOP.CommissionPercent,MOP.CommissionLedger, MOP.ValidityDays, MOP.VendorInputType, MOP.MOPID AS MOPID1, 0 AS Counter1, ShortcutKey from 
+Modeofpayment MOP ) AS X  INNER JOIN (SELECT '2' AS [MOPID], 1 AS [Counter] ) AS Y ON Y.MOPID = X.MOPID WHERE X.MOPName <> '' AND X.MOPTYPEID NOT IN 
+(8) AND  X.MOPTYPEID  NOT IN (7, 9, 6, 12)  AND  X.MOPTYPEID NOT IN (14)  ORDER BY Counter; IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = 
+OBJECT_ID(N'#Temp1') AND type in (N'U')) DROP TABLE #Temp1; IF  EXISTS (SELECT * FROM tempdb..sysObjects WHERE Name = N'#Temp1') DROP TABLE 
+Tempdb..#Temp1; WITH Hier (MainID, ParentID) AS (SELECT DISTINCT GroupID, ParentGroupID FROM GroupMaster WHERE GroupID = 23 UNION ALL SELECT 
+GroupID, ParentGroupID FROM GroupMaster AS G JOIN Hier AS H ON H.MainID = ParentGroupID WHERE GroupID <> 23) SELECT * INTO #Temp1 FROM Hier ; IF  
+EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'#Temp2') AND type in (N'U')) DROP TABLE #Temp2; IF  EXISTS (SELECT * FROM 
+tempdb..sysObjects WHERE Name = N'#Temp2') DROP TABLE Tempdb..#Temp2; WITH Hier (MainID, ParentID) AS (SELECT DISTINCT GroupID, ParentGroupID FROM 
+GroupMaster WHERE GroupID = 8 UNION ALL SELECT GroupID, ParentGroupID FROM GroupMaster AS G JOIN Hier AS H ON H.MainID = ParentGroupID WHERE GroupID 
+<> 8) SELECT * INTO #Temp2 FROM Hier ; IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'#Temp3') AND type in (N'U')) DROP TABLE 
+#Temp3; IF  EXISTS (SELECT * FROM tempdb..sysObjects WHERE Name = N'#Temp3') DROP TABLE Tempdb..#Temp3; WITH Hier (MainID, ParentID) AS (SELECT DISTINCT GroupID, ParentGroupID FROM GroupMaster WHERE GroupID = 17 UNION ALL SELECT GroupID, ParentGroupID FROM GroupMaster AS G JOIN Hier AS H ON H.MainID = ParentGroupID WHERE GroupID <> 17) SELECT * INTO #Temp3 FROM Hier ; Select CM.AllowCreditSale, AM.CreditLimit - (CASE WHEN AM.CreditLimit = 0 THEN 0 WHEN AM.CreditLimit - (AM.DebitAmount - AM.CreditAmount) = 0 THEN AM.CreditLimit + 0.01 ELSE (AM.DebitAmount - AM.CreditAmount) END) AS CreditLimit, AM.CreditDays,Am.Accountid  FROM CustomerMaster CM inner join AccountMaster AM on AM.Accountid = CM.AccountId where CM.AccountId<>1 AND Am.GroupId in (SELECT MainID FROM #Temp1 UNION ALL SELECT MainID FROM #Temp2 UNION ALL SELECT MainID FROM #Temp3) AND CM.CustomerId= '00243' UNion All Select 1 as AllowCreditSale,0 as CreditLimit,0 as CreditDays,1 as AccountID From SalePayment WHERE MOPId=2 AND SerialNumber='14523.0001' ORDER BY AllowCreditSale DESC,AccountID desc; Select 1 as AllowCreditSale,0 as CreditLimit,0 as CreditDays From SalePayment where MOPId=2 AND SerialNumber='14523.0001';Select PointToConvert, EquivalentCurrency, BalancePoint From CustomerDetail where CustomerID ='00243';SELECT * FROM ( select 0 as SerialNumber,0 as VoucherId,0 as VoucherTypeId,0 VoucherName, MOP.MOPID,(CASE WHEN MOP.MOPtypeID=10 AND MOP.ExchangeRate = 0 THEN '' ELSE MOP.MOPName END) AS MOPName,':' as Separator, CONVERT(decimal(5,2), '0') as XValue, MOP.CustomerInfo,MOP.DocumentNumber,MOP.BankName,MOP.CRMPoints,MOP.DirectTender,MOP.MOPTypeId,MOP.AccountId,'' as RefName,'' as TipSeparator, MOP.IsTIPAllowed as isTipAllowed,CONVERT(decimal(5,2), '0') as TipValue,MOP.ExchangeRate,VendorID as [CardVendor],MOP.CommissionPercent,MOP.CommissionLedger, MOP.ValidityDays, MOP.VendorInputType, MOP.MOPID AS MOPID1, 0 AS Counter1, ShortcutKey from Modeofpayment MOP ) AS X  WHERE X.MOPName <> '' AND X.MOPTYPEID IN (1); 
+
+
+exec sp_executesql N'Select SH.SerialNumber,SH.VoucherDate,SH.VchIDYMD,SH.VchNumber,SH.VoucherID,SH.LayoutID,SH.TableName,SH.NoOfPax,SH.DateTimeIn,SH.DateTimeout,SH.DeliveryType, 
+SH.CustomerID,SH.LinkCustomerID,SH.BillAmount,SH.SaleAccountID,SH.UserId,SH.recorddateTime,SH.DataLastChanged,SH.isPrinted as 
+[HeaderPrint],SH.ReservationID,SH.SaleMode,SD.*,PM.ProductName ,CM.CustomerName,CTM.RestrictedSG, CTM.AllowDiscOnSG, PM.BrandName,Pm.SubGroupName, 
+PM.ProductGroupName,PM.DepartmentName,SD.StationID,SH.AccountSerialNumber,Sh.SaleAccountId ,SH.VchIDPrefix,SH.TagOfTable, 
+SH.DiscountCouponID,SH.QtyTotal, SH.MobiWallet, SH.CreateLocationID, SH.ModifyLocationID, SH.LocationID,SH.DataLastChanged,PM.UnitID,SD.SalesPersonID,SD.WarehouseID,SD.SPCommPercent,SD.SPCommAmt,SH.ServiceModeID, SH.UDFField1,SH.UDFField2,SH.UDFField3,SH.UDFField4,SH.UDFField5,SH.UDFField6,SH.UDFField7,SH.UDFField8,SH.UDFField9,SH.UDFField10,SH.Link, SD.SchemeID,SD.Remarks,SH.Remarks as [HeaderRemarks],PM.AllowOperatorDiscount as OperatorDisc,SH.DriverID,SD.SeatID, SH.BusinessType, SH.PlaceOfSupply, SH.GSTINNumberCustomer, SH.GSTINNumberECommerce from SaleHeader SH, SaleDetail SD,ProductDetail PM,CustomerMaster CM INNER JOIN CardTypeMaster AS CTM ON CTM.CardTypeID = CM.CardTypeID where SH.SerialNumber=SD.SerialNumber And PM.ProductID=SD.ProductID And CM.CustomerId=SH.CustomerID And SH.SerialNumber=@SerialNumber; Select ChargesID,ChargesType,ChargesName,Method,AccountID from ChargesMaster where ChargesID in (1,2); Select SH.SerialNumber,SH.SubTotal,ISNULL(D.ChargesAmount,0) as [OtherDiscount],ISNULL(C.ChargesAmount,0) as [OtherCharges],ISNULL(D.Rate,0) as [OtherDiscountRate],  ISNULL(C.Rate,0) as [OtherChargesRate], SH.DiscountCouponID From (SaleHeader SH LEFT JOIN (Select Rate,ChargesAmount,SerialNumber,VoucherID From ChargesDetail where ChargesID=1) as C on C.SerialNumber=SH.SerialNumber AND C.VoucherID=SH.VoucherID) LEFT JOIN (Select Rate,ChargesAmount,SerialNumber,VoucherID From  ChargesDetail where ChargesID=2) as D on D.SerialNumber=SH.SerialNumber AND D.VoucherID=SH.VoucherID Where SH.SerialNumber=14523.0001; Select GvCode, RedeemAmt From GiftVoucherChild where SerialNumber=14523.0001; Select H.DeliveryType, L.DeliveryCharge, Distance from SaleHeader H INNER JOIN LocalityMaster L ON H.LocalityID=L.LocalityID where SerialNumber =14523.0001; Select CASE WHEN AccountID=1 THEN 16 ELSE accountid END as AccountID, PointToConvert, EquivalentCurrency, BalancePoint From CustomerDetail where CustomerID=''00243'';',N'@SerialNumber float',@SerialNumber=14523.000099999999
+
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; EXEC SP_KOTPrinting 80, 0, 0, 14523.0001, 1, 0, ''
+
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; UPDATE SaleDetail SET IsPrinted = 1 where SerialNumber=14523.0001 AND KOTNumber=14513.0001 AND IsPrinted= 0;
+
+SELECT DataLastChanged FROM SaleHeader WHERE SerialNumber = 14523.0001
+
+;Select H.SerialNumber,H.VoucherDate,H.DeliveryType,H.Status,V.VoucherID, V.VoucherTypeID, V.Prefix,L.MinBillAmt from SaleHeader H INNER JOIN LocalityMaster L ON H.LocalityID=L.LocalityID INNER JOIN VoucherMaster AS V ON H.VoucherID = V.VoucherID  WHERE V.Prefix <> H.VchIDPrefix AND 
+H.SerialNumber=14523.0001; Select ChargesID,ChargesType,ChargesName,Method,AccountID from ChargesMaster where ChargesID in (1,2); SELECT isnull(SUM(FinalSaleAmount),0) AS Amt, isnull(SUM(FinalSaleAmount + DiscountFinal),0) AS AmtBeforeDisc FROM SaleDetail WHERE (DiscountFinal <> 0 or SchemeDiscAmt <> 0) AND SerialNumber= 14523.0001; Select SerialNumber from CRMPointRedeemData where (Module = 0 OR Module = 2) AND SSRSerialNumber= 14523.0001; Select SerialNumber from GiftVoucherChild where SerialNumber=14523.0001SELECT SC.name FROM sysobjects SO INNER JOIN syscolumns SC ON SO.id = SC.id WHERE SO.Name = 'SaleHeader' AND SC.IsComputed = 1 ;SELECT SC.name FROM sysobjects SO INNER JOIN syscolumns SC ON SO.id = SC.id WHERE SO.Name = 'RestKOT' AND SC.IsComputed = 1 ;SELECT SC.name FROM sysobjects SO INNER JOIN syscolumns SC ON SO.id = SC.id WHERE SO.Name = 'SaleDetail' AND SC.IsComputed = 1 ;;Select * from SaleHeader WHERE  SerialNumber= 14523.0001 ; Select * FROM RestKOT WHERE SerialNumber IN (SELECT DISTINCT KOTNumber FROM SaleDetail WHERE  SerialNumber= 14523.0001)  ; Select * from SaleDetail WHERE  SerialNumber= 14523.0001 ; Select Distinct PD.ServiceItem,PD.ServiceRate,PD.ServicePeriodicity,SH.CustomerId, SH.SerialNumber,SH.LocationID From ProductDetail PD INNER JOIN SaleDetail SD on PD.ProductID=SD.ProductID INNER JOIN SaleHeader SH On SD.SerialNumber=SH.SerialNumber WHERE(SD.SaleType = 4 AND SD.CancellationReasonID = 0  AND PD.ServiceItem<>'' AND SH.CustomerID<>'00001' AND SH.SerialNumber =14523.0001 );;Select count(serialnumber) from SalePayment where  SerialNumber= 14523.0001Select PointAwardedOnProduct,ExcludeTaxInPoint, CT.PointAwarded, CT.VisitPoint, (CASE WHEN CM.ReferralPointAwarded = 0 OR CM.ReferralPointAwarded = SH.SerialNumber THEN CT.ReferralPoint ELSE 0 END) AS ReferralPoint, CM.ReferralPointAwarded from CardTypeMaster CT INNER JOIN CustomerMaster CM ON CM.CardTypeID = CT.CardTypeID INNER JOIN SaleHeader SH ON SH.CustomerID=CM.CustomerID WHERE SH.SerialNumber = 14523.0001
+
+SELECT AccountID, SUM(Amount) AS Amount, SUM(AssessableValue) AS AssessableValue FROM (SELECT TaxID1 AS AccountID, TaxAmount1 AS Amount, TaxableValue1 AS AssessableValue FROM SaleDetail WHERE SerialNumber = 14523.0001 AND TaxAmount1 <> 0 UNION ALL SELECT TaxID2 AS AccountID, TaxAmount2 AS Amount, TaxableValue2 AS AssessableValue FROM SaleDetail WHERE SerialNumber = 14523.0001 AND TaxAmount2 <> 0 UNION ALL SELECT TaxID3 AS AccountID, TaxAmount3 AS Amount, TaxableValue3 AS AssessableValue FROM SaleDetail WHERE SerialNumber = 14523.0001 AND TaxAmount3 <> 0 UNION ALL SELECT TaxID4 AS AccountID, TaxAmount4 AS Amount, TaxableValue4 AS AssessableValue FROM SaleDetail WHERE SerialNumber = 14523.0001 AND TaxAmount4 <> 0) AS X GROUP BY AccountID HAVING SUM(Amount)<>0; Select PM.SaleAccountID, TM.SaleAccountID AS SaleAccountIDFromTax, SUM(SD.FinalSaleAmount-SD.TaxAmount) as LedgerAmount From ProductMaster PM INNER JOIN SaleDetail SD ON PM.ProductID = SD.ModifierProductID INNER JOIN TaxMaster AS TM ON TM.TaxID = SD.TaxID where PM.SaleAccountID + TM.SaleAccountID <> 0 And SD.SerialNumber = 14523.0001 Group by PM.SaleAccountID, TM.SaleAccountID HAVING SUM(SD.FinalSaleAmount-SD.TaxAmount) > 0; 
+
+SELECT AccountID AS Result FROM CustomerMaster WHERE CustomerID = N'00243'
+
+SELECT LTRIM(RTRIM((CASE WHEN VchIdPrefix <> '' THEN VchIdPrefix + '/' ELSE '' END) + (CASE WHEN DataLength(VchIDYMD) > 2 THEN VchIDYMD + '/' ELSE '' END) +  CONVERT(Char, VchNumber))) AS VchNumber, AccountSerialNumber,BillReference, SerialNumber, DueDate FROM SaleHeader WHERE SerialNumber = 14523.0001
+
+Select LinkId, OnSaleValue, PointAwarded, VisitPoint, (CASE WHEN ReferralPointAwarded = 0 OR ReferralPointAwarded = 14523.0001 THEN ReferralPoint ELSE 0 END) AS ReferralPoint, ReferralPointAwarded, RoundOffID, RoundingLimit, ExtraPointOnBDay, CalcExtraPointMethod, MarginDays, PointToLinkedCustomer, BirthDate, AnniversaryDate, CardIssueDate, CardExpiryDate, LinkCardIssueDate, LinkCardExpiryDate, MultiplyPointBy,WeekDays,FromTime,ToTime, CardTypeID, VisitCount FROM CustomerDetail Where CustomerId='00243'
+
+SELECT DataLastChanged FROM SaleHeader WHERE SerialNumber = 14523.0001
+
+UPDATE AutoNumber SET LastNumber = LastNumber + 1 WHERE TableName = 'transactionmaster' AND FieldName = 'SerialNumber'SELECT LastNumber FROM AutoNumber WHERE TableName = 'transactionmaster' AND FieldName = 'SerialNumber'
+
+
+SELECT ISNULL(MAX(VchNumber), 0) AS VchNumber FROM transactionmaster WHERE CONVERT(Char(10), VoucherDate, 102) BETWEEN CONVERT(char(10), convert(datetime, '1/1/2026 00:00'), 102) AND CONVERT(char(10), convert(datetime, '12/31/2026 23:59'), 102)  AND VoucherID = 16 AND CreateLocationID = (SELECT LocationID FROM Server)
+
+exec sp_executesql N'insert into transactionmaster(voucherdate,vchidymd,vchnumber,userid,voucherid,vchidprefix,sessionid,createlocationid,locationid,modifylocationid,reservationid,stationid,batchid,SerialNumber) values (@voucherdate,@vchidymd,@vchnumber,@userid,@voucherid,@vchidprefix,@sessionid,@createlocationid,@locationid,@modifylocationid,@reservationid,@stationid,@batchid,@SerialNumber);',N'@voucherdate nvarchar(16),@vchidymd nvarchar(2),@vchnumber int,@userid nvarchar(1),@voucherid nvarchar(2),@vchidprefix nvarchar(4000),@sessionid nvarchar(6),@createlocationid nvarchar(1),@locationid nvarchar(1),@modifylocationid nvarchar(1),@reservationid nvarchar(4000),@stationid nvarchar(1),@batchid nvarchar(6),@SerialNumber nvarchar(10)',@voucherdate=N'06/22/2026 19:09',@vchidymd=N'26',@vchnumber=4,@userid=N'1',@voucherid=N'16',@vchidprefix=N'',@sessionid=N'0003CR',@createlocationid=N'1',@locationid=N'1',@modifylocationid=N'1',@reservationid=N'',@stationid=N'1',@batchid=N'000001',@SerialNumber=N'32795.0001'
+
+exec sp_executesql N'insert into transactionchild(serialnumber,toby,accountid,contraid,debitamount,creditamount) values (@serialnumber,@toby,@accountid,@contraid,@debitamount,@creditamount);',N'@serialnumber nvarchar(10),@toby nvarchar(2),@accountid nvarchar(4),@contraid nvarchar(1),@debitamount nvarchar(4),@creditamount nvarchar(1)',@serialnumber=N'32795.0001',@toby=N'43',@accountid=N'3472',@contraid=N'3',@debitamount=N'6970',@creditamount=N'0'
+
+
+exec sp_executesql N'insert into transactionchild(serialnumber,toby,accountid,contraid,debitamount,creditamount) values (@serialnumber,@toby,@accountid,@contraid,@debitamount,@creditamount);',N'@serialnumber nvarchar(10),@toby nvarchar(2),@accountid nvarchar(3),@contraid nvarchar(4),@debitamount nvarchar(1),@creditamount nvarchar(5)',@serialnumber=N'32795.0001',@toby=N'42',@accountid=N'578',@contraid=N'3472',@debitamount=N'0',@creditamount=N'17.24'
+
+
+exec sp_executesql N'insert into transactionchild(serialnumber,toby,accountid,contraid,debitamount,creditamount) values (@serialnumber,@toby,@accountid,@contraid,@debitamount,@creditamount);',N'@serialnumber nvarchar(10),@toby nvarchar(2),@accountid nvarchar(1),@contraid nvarchar(4),@debitamount nvarchar(1),@creditamount nvarchar(7)',@serialnumber=N'32795.0001',@toby=N'42',@accountid=N'3',@contraid=N'3472',@debitamount=N'0',@creditamount=N'5991.38'
+
+
+exec sp_executesql N'insert into transactionchild(serialnumber,toby,accountid,contraid,debitamount,creditamount,assessablevalue) values (@serialnumber,@toby,@accountid,@contraid,@debitamount,@creditamount,@assessablevalue);',N'@serialnumber nvarchar(10),@toby nvarchar(2),@accountid nvarchar(3),@contraid nvarchar(4),@debitamount nvarchar(1),@creditamount nvarchar(6),@assessablevalue nvarchar(7)',@serialnumber=N'32795.0001',@toby=N'42',@accountid=N'571',@contraid=N'3472',@debitamount=N'0',@creditamount=N'961.38',@assessablevalue=N'6008.62'
+
+
+exec sp_executesql N'insert into refmaster(serialnumber,accountid,refdate,duedate,reftype,refname,toby,debitamount,creditamount) values (@serialnumber,@accountid,@refdate,@duedate,@reftype,@refname,@toby,@debitamount,@creditamount);',N'@serialnumber nvarchar(10),@accountid nvarchar(4),@refdate nvarchar(16),@duedate nvarchar(15),@reftype nvarchar(2),@refname nvarchar(10),@toby nvarchar(2),@debitamount nvarchar(4),@creditamount nvarchar(1)',@serialnumber=N'32795.0001',@accountid=N'3472',@refdate=N'06/22/2026 19:09',@duedate=N'6/22/2026 00:00',@reftype=N'46',@refname=N'14523.0001',@toby=N'43',@debitamount=N'6970',@creditamount=N'0'
+
+exec sp_executesql N'insert into refmaster(serialnumber,accountid,refdate,duedate,reftype,refname,toby,debitamount,creditamount) values (@serialnumber,@accountid,@refdate,@duedate,@reftype,@refname,@toby,@debitamount,@creditamount);',N'@serialnumber nvarchar(10),@accountid nvarchar(4),@refdate nvarchar(16),@duedate nvarchar(15),@reftype nvarchar(2),@refname nvarchar(10),@toby nvarchar(2),@debitamount nvarchar(4),@creditamount nvarchar(1)',@serialnumber=N'32795.0001',@accountid=N'3472',@refdate=N'06/22/2026 19:09',@duedate=N'6/22/2026 00:00',@reftype=N'46',@refname=N'14523.0001',@toby=N'43',@debitamount=N'6970',@creditamount=N'0'
+
+
+exec sp_executesql N'UPDATE saleheader  set status=@status,datetimeout=@datetimeout,accountserialnumber=@accountserialnumber,roundoffamt=@roundoffamt,billamount=@billamount,crmpoints=@crmpoints,crmpointstoparent=@crmpointstoparent,userid=@userid,batchid=@batchid,stationid=@stationid,sessionid=@sessionid,voucherdate=@voucherdate,vchidprefix=@vchidprefix,vchidymd=@vchidymd,vchnumber=@vchnumber,voucherid=@voucherid,narration=@narration,layoutid=@layoutid,tablename=@tablename,noofpax=@noofpax,datetimein=@datetimein,soserialnumber=@soserialnumber,customerid=@customerid,linkcustomerid=@linkcustomerid,companyname=@companyname,address1=@address1,address2=@address2,address3=@address3,cityid=@cityid,stateid=@stateid,countryid=@countryid,pincode=@pincode,billreference=@billreference,isprinted=@isprinted,saleaccountid=@saleaccountid,companyid=@companyid,createlocationid=@createlocationid,locationid=@locationid,modifylocationid=@modifylocationid,recorddatetime=@recorddatetime,qtytotal=@qtytotal,subtotal=@subtotal,taxtotal=@taxtotal,pricelistid=@pricelistid,duedate=@duedate,servicemodeid=@servicemodeid,tagoftable=@tagoftable,udffield1=@udffield1,udffield2=@udffield2,udffield3=@udffield3,udffield4=@udffield4,udffield5=@udffield5,udffield6=@udffield6,udffield7=@udffield7,udffield8=@udffield8,udffield9=@udffield9,udffield10=@udffield10,deliverydatetime=@deliverydatetime,driverid=@driverid,assigndatetime=@assigndatetime,deliverdatetime=@deliverdatetime,deliverystatus=@deliverystatus,isaudited=@isaudited,auditby=@auditby,auditdate=@auditdate,auditlocation=@auditlocation,auditremarks=@auditremarks,link=@link,reservationid=@reservationid,salemode=@salemode,discountcouponid=@discountcouponid,deliverytype=@deliverytype,addresstype=@addresstype,packages=@packages,streetnumber=@streetnumber,streetid=@streetid,localityid=@localityid,billedto=@billedto,hdserial=@hdserial,assignuser=@assignuser,delivereduser=@delivereduser,pmntuser=@pmntuser,pmntdate=@pmntdate,prepareuser=@prepareuser,preparedate=@preparedate,tripid=@tripid,remarks=@remarks,mobiwallet=@mobiwallet,otherswentry=@otherswentry,placeofsupply=@placeofsupply,businesstype=@businesstype,gstinnumbercustomer=@gstinnumbercustomer,gstinnumberecommerce=@gstinnumberecommerce,tpvchno=@tpvchno,tpchannel=@tpchannel  
+where  SerialNumber= 14523.0001;',N'@status nvarchar(1),@datetimeout nvarchar(16),@accountserialnumber nvarchar(10),@roundoffamt nvarchar(4),@billamount nvarchar(4),@crmpoints nvarchar(1),@crmpointstoparent nvarchar(1),@userid nvarchar(1),@batchid nvarchar(6),@stationid nvarchar(1),@sessionid nvarchar(6),@voucherdate nvarchar(16),@vchidprefix nvarchar(4000),@vchidymd nvarchar(2),@vchnumber int,@voucherid 
+nvarchar(2),@narration nvarchar(20),@layoutid nvarchar(2),@tablename nvarchar(6),@noofpax nvarchar(1),@datetimein nvarchar(15),@soserialnumber 
+nvarchar(6),@customerid nvarchar(5),@linkcustomerid nvarchar(5),@companyname nvarchar(17),@address1 nvarchar(4000),@address2 
+nvarchar(4000),@address3 nvarchar(4000),@cityid nvarchar(1),@stateid nvarchar(1),@countryid nvarchar(1),@pincode nvarchar(4000),@billreference 
+nvarchar(4000),@isprinted nvarchar(1),@saleaccountid nvarchar(1),@companyid nvarchar(1),@createlocationid nvarchar(1),@locationid 
+nvarchar(1),@modifylocationid nvarchar(1),@recorddatetime nvarchar(15),@qtytotal nvarchar(6),@subtotal nvarchar(9),@taxtotal 
+nvarchar(8),@pricelistid nvarchar(1),@duedate nvarchar(9),@servicemodeid nvarchar(1),@tagoftable nvarchar(4000),@udffield1 nvarchar(4000),@udffield2 
+nvarchar(4000),@udffield3 nvarchar(4000),@udffield4 nvarchar(4000),@udffield5 nvarchar(4000),@udffield6 nvarchar(4000),@udffield7 
+nvarchar(4000),@udffield8 nvarchar(4000),@udffield9 nvarchar(4000),@udffield10 nvarchar(4000),@deliverydatetime nvarchar(15),@driverid 
+nvarchar(1),@assigndatetime nvarchar(15),@deliverdatetime nvarchar(8),@deliverystatus nvarchar(1),@isaudited nvarchar(5),@auditby 
+nvarchar(1),@auditdate nvarchar(8),@auditlocation nvarchar(1),@auditremarks nvarchar(4000),@link nvarchar(4000),@reservationid 
+nvarchar(4000),@salemode nvarchar(1),@discountcouponid nvarchar(4000),@deliverytype nvarchar(2),@addresstype nvarchar(3),@packages 
+nvarchar(1),@streetnumber nvarchar(4000),@streetid nvarchar(1),@localityid nvarchar(1),@billedto nvarchar(3),@hdserial nvarchar(1),@assignuser 
+nvarchar(1),@delivereduser nvarchar(1),@pmntuser nvarchar(1),@pmntdate nvarchar(8),@prepareuser nvarchar(1),@preparedate nvarchar(8),@tripid 
+nvarchar(6),@remarks nvarchar(4000),@mobiwallet nvarchar(4000),@otherswentry nvarchar(1),@placeofsupply nvarchar(1),@businesstype 
+nvarchar(3),@gstinnumbercustomer nvarchar(4000),@gstinnumberecommerce nvarchar(4000),@tpvchno nvarchar(4000),@tpchannel nvarchar(4000)',@status=N'2',@datetimeout=N'06/22/2026 19:09',@accountserialnumber=N'32795.0001',@roundoffamt=N'0.00',@billamount=N'6970',@crmpoints=N'0',@crmpointstoparent=N'0',@userid=N'1',@batchid=N'000001',@stationid=N'1',@sessionid=N'0003CR',@voucherdate=N'06/22/2026 19:09',@vchidprefix=N'',@vchidymd=N'26',@vchnumber=4,@voucherid=N'16',@narration=N'Temp Memo-14523.0001',@layoutid=N'37',@tablename=N'MEMBER',@noofpax=N'1',@datetimein=N'6/22/2026 19:09',@soserialnumber=N'0.0000',@customerid=N'00243',@linkcustomerid=N'00001',@companyname=N'Anthropic Studios',@address1=N'',@address2=N'',@address3=N'',@cityid=N'1',@stateid=N'1',@countryid=N'1',@pincode=N'',@billreference=N'',@isprinted=N'0',@saleaccountid=N'3',@companyid=N'1',@createlocationid=N'1',@locationid=N'1',@modifylocationid=N'1',@recorddatetime=N'6/22/2026 19:09',@qtytotal=N'2.0000',@subtotal=N'6970.0000',@taxtotal=N'961.3800',@pricelistid=N'1',@duedate=N'6/22/2026',@servicemodeid=N'1',@tagoftable=N'',@udffield1=N'',@udffield2=N'',@udffield3=N'',@udffield4=N'',@udffield5=N'',@udffield6=N'',@udffield7=N'',@udffield8=N'',@udffield9=N'',@udffield10=N'',@deliverydatetime=N'6/22/2026 19:09',@driverid=N'0',@assigndatetime=N'6/22/2026 19:09',@deliverdatetime=N'1/1/1900',@deliverystatus=N'0',@isaudited=N'False',@auditby=N'0',@auditdate=N'1/1/1900',@auditlocation=N'0',@auditremarks=N'',@link=N'',@reservationid=N'',@salemode=N'1',@discountcouponid=N'',@deliverytype=N'77',@addresstype=N'648',@packages=N'0',@streetnumber=N'',@streetid=N'1',@localityid=N'1',@billedto=N'659',@hdserial=N'0',@assignuser=N'0',@delivereduser=N'0',@pmntuser=N'0',@pmntdate=N'1/1/1900',@prepareuser=N'0',@preparedate=N'1/1/1900',@tripid=N'0.0000',@remarks=N'',@mobiwallet=N'',@otherswentry=N'0',@placeofsupply=N'2',@businesstype=N'848',@gstinnumbercustomer=N'',@gstinnumberecommerce=N'',@tpvchno=N'',@tpchannel=N''
+
+
+
+
+SELECT TOP 1 * FROM saleheader WHERE  SerialNumber= 14523.0001
+
+SELECT SC.name FROM sysobjects SO INNER JOIN syscolumns SC ON SO.id = SC.id WHERE SO.Name = 'saleheader' AND SC.IsComputed = 1
+
+SELECT * FROM saleheader WHERE  SerialNumber= 14523.0001
+
+
+exec sp_executesql N'UPDATE restkot  set serialnumber=@serialnumber,kotdatetime=@kotdatetime,createlocationid=@createlocationid,locationid=@locationid,modifylocationid=@modifylocationid,sessionid=@sessionid,deliverydatetime=@deliverydatetime,statusid=@statusid,kotidprefix=@kotidprefix,kotidymd=@kotidymd,newkotnumber=@newkotnumber,orderselected=@orderselected,orderdone=@orderdone,orderserve=@orderserve  where  SerialNumber = 14513.0001;',N'@serialnumber nvarchar(10),@kotdatetime nvarchar(15),@createlocationid nvarchar(1),@locationid nvarchar(1),@modifylocationid nvarchar(1),@sessionid nvarchar(6),@deliverydatetime nvarchar(15),@statusid nvarchar(1),@kotidprefix nvarchar(4000),@kotidymd nvarchar(2),@newkotnumber nvarchar(1),@orderselected nvarchar(8),@orderdone nvarchar(8),@orderserve nvarchar(8)',@serialnumber=N'14513.0001',@kotdatetime=N'6/22/2026 19:09',@createlocationid=N'1',@locationid=N'1',@modifylocationid=N'1',@sessionid=N'0003CR',@deliverydatetime=N'6/22/2026 19:09',@statusid=N'0',@kotidprefix=N'',@kotidymd=N'26',@newkotnumber=N'4',@orderselected=N'1/1/1900',@orderdone=N'1/1/1900',@orderserve=N'1/1/1900'
+
+
+SELECT TOP 1 * FROM restkot WHERE  SerialNumber = 14513.0001
+
+SELECT * FROM restkot WHERE  SerialNumber = 14513.0001
+delete from saledetail  WHERE  SerialNumber= 14523.0001;
+
+
+exec sp_executesql N'insert into saledetail(serialnumber,saletype,productid,childid,locationcode,modifierproductid,warehouseid,quantity,mrp,salerate,remarks,salespersonid,taxid,taxrate,includeinrate,taxid1,taxrate1,taxamount1,taxid2,taxrate2,taxamount2,taxid3,taxrate3,taxamount3,taxid4,taxrate4,taxamount4,discountproduct,discountmanual,discountfinal,finalsalerate,perunitid,isprinted,menuid,kotnumber,cancellationreasonid,printerid,stationid,soserialnumber,alternateqty,alternateunitid,conversionfactor,unitid,inputrate,inputrateunitid,inputrateperqty,productdiscount,customerdiscount,pricelistdiscount,spcommpercent,spcommamt,schemeid,schemediscpercent,schemediscamt,scserialnumber,chargespercent,chargesamount,seatid,voiddatetime,userid,voiduserid,ordernumber,userstationid,calcmethod,taxablevalue1,taxablevalue2,taxablevalue3,taxablevalue4,statusid) values 
+(@serialnumber,@saletype,@productid,@childid,@locationcode,@modifierproductid,@warehouseid,@quantity,@mrp,@salerate,@remarks,@salespersonid,@taxid,@taxrate,@includeinrate,@taxid1,@taxrate1,@taxamount1,@taxid2,@taxrate2,@taxamount2,@taxid3,@taxrate3,@taxamount3,@taxid4,@taxrate4,@taxamount4,@discountproduct,@discountmanual,@discountfinal,@finalsalerate,@perunitid,@isprinted,@menuid,@kotnumber,@cancellationreasonid,@printerid,@stationid,@soserialnumber,@alternateqty,@alternateunitid,@conversionfactor,@unitid,@inputrate,@inputrateunitid,@inputrateperqty,@productdiscount,@customerdiscount,@pricelistdiscount,@spcommpercent,@spcommamt,@schemeid,@schemediscpercent,@schemediscamt,@scserialnumber,@chargespercent,@chargesamount,@seatid,@voiddatetime,@userid,@voiduserid,@ordernumber,@userstationid,@calcmethod,@taxablevalue1,@taxablevalue2,@taxablevalue3,@taxablevalue4,@statusid);',N'@serialnumber 
+nvarchar(10),@saletype nvarchar(1),@productid nvarchar(4),@childid nvarchar(4),@locationcode nvarchar(3),@modifierproductid nvarchar(4),@warehouseid 
+nvarchar(1),@quantity nvarchar(5),@mrp nvarchar(8),@salerate nvarchar(8),@remarks nvarchar(4000),@salespersonid nvarchar(1),@taxid 
+nvarchar(1),@taxrate nvarchar(6),@includeinrate nvarchar(4),@taxid1 nvarchar(3),@taxrate1 nvarchar(9),@taxamount1 nvarchar(7),@taxid2 
+nvarchar(1),@taxrate2 nvarchar(8),@taxamount2 nvarchar(5),@taxid3 nvarchar(1),@taxrate3 nvarchar(8),@taxamount3 nvarchar(5),@taxid4 
+nvarchar(1),@taxrate4 nvarchar(8),@taxamount4 nvarchar(5),@discountproduct nvarchar(5),@discountmanual nvarchar(5),@discountfinal 
+nvarchar(5),@finalsalerate nvarchar(14),@perunitid nvarchar(1),@isprinted nvarchar(1),@menuid nvarchar(2),@kotnumber 
+nvarchar(10),@cancellationreasonid nvarchar(1),@printerid nvarchar(1),@stationid nvarchar(1),@soserialnumber nvarchar(6),@alternateqty 
+nvarchar(5),@alternateunitid nvarchar(1),@conversionfactor nvarchar(5),@unitid nvarchar(1),@inputrate nvarchar(8),@inputrateunitid 
+nvarchar(1),@inputrateperqty nvarchar(5),@productdiscount nvarchar(5),@customerdiscount nvarchar(5),@pricelistdiscount nvarchar(5),@spcommpercent 
+nvarchar(4),@spcommamt nvarchar(5),@schemeid nvarchar(1),@schemediscpercent nvarchar(4),@schemediscamt nvarchar(5),@scserialnumber nvarchar(6),@chargespercent nvarchar(4),@chargesamount nvarchar(5),@seatid nvarchar(1),@voiddatetime nvarchar(8),@userid nvarchar(1),@voiduserid nvarchar(1),@ordernumber nvarchar(4000),@userstationid nvarchar(1),@calcmethod nvarchar(3),@taxablevalue1 nvarchar(8),@taxablevalue2 nvarchar(5),@taxablevalue3 nvarchar(5),@taxablevalue4 nvarchar(5),@statusid nvarchar(1)',@serialnumber=N'14523.0001',@saletype=N'4',@productid=N'000E',@childid=N'0000',@locationcode=N'000',@modifierproductid=N'000E',@warehouseid=N'1',@quantity=N'1.000',@mrp=N'6950.000',@salerate=N'6950.000',@remarks=N'',@salespersonid=N'1',@taxid=N'3',@taxrate=N'16.000',@includeinrate=N'True',@taxid1=N'571',@taxrate1=N'13.793103',@taxamount1=N'958.620',@taxid2=N'0',@taxrate2=N'0.000000',@taxamount2=N'0.000',@taxid3=N'0',@taxrate3=N'0.000000',@taxamount3=N'0.000',@taxid4=N'0',@taxrate4=N'0.000000',@taxamount4=N'0.000',@discountproduct=N'0.000',@discountmanual=N'0.000',@discountfinal=N'0.000',@finalsalerate=N'6950.000000000',@perunitid=N'1',@isprinted=N'1',@menuid=N'13',@kotnumber=N'14513.0001',@cancellationreasonid=N'0',@printerid=N'1',@stationid=N'1',@soserialnumber=N'0.0000',@alternateqty=N'0.000',@alternateunitid=N'1',@conversionfactor=N'1.000',@unitid=N'1',@inputrate=N'6950.000',@inputrateunitid=N'1',@inputrateperqty=N'1.000',@productdiscount=N'0.000',@customerdiscount=N'0.000',@pricelistdiscount=N'0.000',@spcommpercent=N'0.00',@spcommamt=N'0.000',@schemeid=N'1',@schemediscpercent=N'0.00',@schemediscamt=N'0.000',@scserialnumber=N'0.0000',@chargespercent=N'0.00',@chargesamount=N'0.000',@seatid=N'1',@voiddatetime=N'1/1/1900',@userid=N'1',@voiduserid=N'0',@ordernumber=N'',@userstationid=N'1',@calcmethod=N'151',@taxablevalue1=N'5991.380',@taxablevalue2=N'0.000',@taxablevalue3=N'0.000',@taxablevalue4=N'0.000',@statusid=N'0'
+
+
+exec sp_executesql N'insert into saledetail(serialnumber,saletype,productid,childid,locationcode,modifierproductid,warehouseid,quantity,mrp,salerate,remarks,salespersonid,taxid,taxrate,includeinrate,taxid1,taxrate1,taxamount1,taxid2,taxrate2,taxamount2,taxid3,taxrate3,taxamount3,taxid4,taxrate4,taxamount4,discountproduct,discountmanual,discountfinal,finalsalerate,perunitid,isprinted,menuid,kotnumber,cancellationreasonid,printerid,stationid,soserialnumber,alternateqty,alternateunitid,conversionfactor,unitid,inputrate,inputrateunitid,inputrateperqty,productdiscount,customerdiscount,pricelistdiscount,spcommpercent,spcommamt,schemeid,schemediscpercent,schemediscamt,scserialnumber,chargespercent,chargesamount,seatid,voiddatetime,userid,voiduserid,ordernumber,userstationid,calcmethod,taxablevalue1,taxablevalue2,taxablevalue3,taxablevalue4,statusid) 
+values 
+(@serialnumber,@saletype,@productid,@childid,@locationcode,@modifierproductid,@warehouseid,@quantity,@mrp,@salerate,@remarks,@salespersonid,@taxid,@taxrate,@includeinrate,@taxid1,@taxrate1,@taxamount1,@taxid2,@taxrate2,@taxamount2,@taxid3,@taxrate3,@taxamount3,@taxid4,@taxrate4,@taxamount4,@discountproduct,@discountmanual,@discountfinal,@finalsalerate,@perunitid,@isprinted,@menuid,@kotnumber,@cancellationreasonid,@printerid,@stationid,@soserialnumber,@alternateqty,@alternateunitid,@conversionfactor,@unitid,@inputrate,@inputrateunitid,@inputrateperqty,@productdiscount,@customerdiscount,@pricelistdiscount,@spcommpercent,@spcommamt,@schemeid,@schemediscpercent,@schemediscamt,@scserialnumber,@chargespercent,@chargesamount,@seatid,@voiddatetime,@userid,@voiduserid,@ordernumber,@userstationid,@calcmethod,@taxablevalue1,@taxablevalue2,@taxablevalue3,@taxablevalue4,@statusid);',N'@serialnumber 
+nvarchar(10),@saletype nvarchar(1),@productid nvarchar(4),@childid nvarchar(4),@locationcode nvarchar(3),@modifierproductid nvarchar(4),@warehouseid 
+nvarchar(1),@quantity nvarchar(5),@mrp nvarchar(6),@salerate nvarchar(6),@remarks nvarchar(4000),@salespersonid nvarchar(1),@taxid 
+nvarchar(1),@taxrate nvarchar(6),@includeinrate nvarchar(4),@taxid1 nvarchar(3),@taxrate1 nvarchar(9),@taxamount1 nvarchar(5),@taxid2 
+nvarchar(1),@taxrate2 nvarchar(8),@taxamount2 nvarchar(5),@taxid3 nvarchar(1),@taxrate3 nvarchar(8),@taxamount3 nvarchar(5),@taxid4 
+nvarchar(1),@taxrate4 nvarchar(8),@taxamount4 nvarchar(5),@discountproduct nvarchar(5),@discountmanual nvarchar(5),@discountfinal 
+nvarchar(5),@finalsalerate nvarchar(12),@perunitid nvarchar(1),@isprinted nvarchar(1),@menuid nvarchar(2),@kotnumber 
+nvarchar(10),@cancellationreasonid nvarchar(1),@printerid nvarchar(1),@stationid nvarchar(1),@soserialnumber nvarchar(6),@alternateqty 
+nvarchar(5),@alternateunitid nvarchar(1),@conversionfactor nvarchar(5),@unitid nvarchar(1),@inputrate nvarchar(6),@inputrateunitid 
+nvarchar(1),@inputrateperqty nvarchar(5),@productdiscount nvarchar(5),@customerdiscount nvarchar(5),@pricelistdiscount nvarchar(5),@spcommpercent 
+nvarchar(4),@spcommamt nvarchar(5),@schemeid nvarchar(1),@schemediscpercent nvarchar(4),@schemediscamt nvarchar(5),@scserialnumber nvarchar(6),@chargespercent nvarchar(4),@chargesamount nvarchar(5),@seatid nvarchar(1),@voiddatetime nvarchar(8),@userid nvarchar(1),@voiduserid nvarchar(1),@ordernumber nvarchar(4000),@userstationid nvarchar(1),@calcmethod nvarchar(3),@taxablevalue1 nvarchar(6),@taxablevalue2 nvarchar(5),@taxablevalue3 nvarchar(5),@taxablevalue4 nvarchar(5),@statusid nvarchar(1)',@serialnumber=N'14523.0001',@saletype=N'4',@productid=N'000K',@childid=N'0000',@locationcode=N'000',@modifierproductid=N'000K',@warehouseid=N'1',@quantity=N'1.000',@mrp=N'20.000',@salerate=N'20.000',@remarks=N'',@salespersonid=N'1',@taxid=N'3',@taxrate=N'16.000',@includeinrate=N'True',@taxid1=N'571',@taxrate1=N'13.793103',@taxamount1=N'2.760',@taxid2=N'0',@taxrate2=N'0.000000',@taxamount2=N'0.000',@taxid3=N'0',@taxrate3=N'0.000000',@taxamount3=N'0.000',@taxid4=N'0',@taxrate4=N'0.000000',@taxamount4=N'0.000',@discountproduct=N'0.000',@discountmanual=N'0.000',@discountfinal=N'0.000',@finalsalerate=N'20.000000000',@perunitid=N'1',@isprinted=N'1',@menuid=N'13',@kotnumber=N'14513.0001',@cancellationreasonid=N'0',@printerid=N'1',@stationid=N'1',@soserialnumber=N'0.0000',@alternateqty=N'0.000',@alternateunitid=N'1',@conversionfactor=N'1.000',@unitid=N'1',@inputrate=N'20.000',@inputrateunitid=N'1',@inputrateperqty=N'1.000',@productdiscount=N'0.000',@customerdiscount=N'0.000',@pricelistdiscount=N'0.000',@spcommpercent=N'0.00',@spcommamt=N'0.000',@schemeid=N'1',@schemediscpercent=N'0.00',@schemediscamt=N'0.000',@scserialnumber=N'0.0000',@chargespercent=N'0.00',@chargesamount=N'0.000',@seatid=N'1',@voiddatetime=N'1/1/1900',@userid=N'1',@voiduserid=N'0',@ordernumber=N'',@userstationid=N'1',@calcmethod=N'151',@taxablevalue1=N'17.240',@taxablevalue2=N'0.000',@taxablevalue3=N'0.000',@taxablevalue4=N'0.000',@statusid=N'0'
+
+delete from subscriptionmaster  WHERE  SerialNumber= 14523.0001;
+
+delete from jointable  WHERE TableNameTo ='MEMBER';
+
+delete from salepayment  WHERE Serialnumber = 14523.0001;
+
+exec sp_executesql N'insert into salepayment(serialnumber,mopid,amount,tenderamount,returnamount,bankname,documentno,remarks) values (@serialnumber,@mopid,@amount,@tenderamount,@returnamount,@bankname,@documentno,@remarks);',N'@serialnumber nvarchar(10),@mopid nvarchar(1),@amount nvarchar(4),@tenderamount nvarchar(1),@returnamount nvarchar(1),@bankname nvarchar(4000),@documentno nvarchar(4000),@remarks nvarchar(4000)',@serialnumber=N'14523.0001',@mopid=N'2',@amount=N'6970',@tenderamount=N'0',@returnamount=N'0',@bankname=N'',@documentno=N'',@remarks=N''
+
+
+
+delete from chargesdetail  WHERE  SerialNumber= 14523.0001 AND VoucherID = 16;
+
+UPDATE AutoNumber SET LastNumber = LastNumber + 1 WHERE TableName = 'OutboxData' AND FieldName = 'ID'SELECT LastNumber FROM AutoNumber WHERE TableName = 'OutboxData' AND FieldName = 'ID'
+
+exec sp_executesql N'insert into outboxdata (ID, outboxxml, LocationID, Priority) values(@ID, @sXml, @LocationID, @Priority)',N'@ID float,@sXml nvarchar(max) ,@LocationID nvarchar(2),@Priority int',@ID=33653.000099999997,@sXml=N'<Sql Version="2.0878">
+  <Insert Table="transactionmaster">
+    <voucherdate>06/22/2026 19:09</voucherdate>
+    <vchidymd>26</vchidymd>
+    <vchnumber>4</vchnumber>
+    <userid>1</userid>
+    <voucherid>16</voucherid>
+    <vchidprefix></vchidprefix>
+    <sessionid>0003CR</sessionid>
+    <createlocationid>1</createlocationid>
+    <locationid>1</locationid>
+    <modifylocationid>1</modifylocationid>
+    <reservationid></reservationid>
+    <stationid>1</stationid>
+    <batchid>000001</batchid>
+    <SerialNumber>32795.0001</SerialNumber>
+  </Insert>
+  <Insert Table="transactionchild" IDColumnName="SrlNo" GenID8Remote="Yes">
+    <serialnumber>32795.0001</serialnumber>
+    <toby>43</toby>
+    <accountid>3472</accountid>
+    <contraid>3</contraid>
+    <debitamount>6970</debitamount>
+    <creditamount>0</creditamount>
+  </Insert>
+  <Insert Table="transactionchild" IDColumnName="SrlNo" GenID8Remote="Yes">
+    <serialnumber>32795.0001</serialnumber>
+    <toby>42</toby>
+    <accountid>578</accountid>
+    <contraid>3472</contraid>
+    <debitamount>0</debitamount>
+    <creditamount>17.24</creditamount>
+  </Insert>
+  <Insert Table="transactionchild" IDColumnName="SrlNo" GenID8Remote="Yes">
+    <serialnumber>32795.0001</serialnumber>
+    <toby>42</toby>
+    <accountid>3</accountid>
+    <contraid>3472</contraid>
+    <debitamount>0</debitamount>
+    <creditamount>5991.38</creditamount>
+  </Insert>
+  <Insert Table="transactionchild" IDColumnName="SrlNo" GenID8Remote="Yes">
+    <serialnumber>32795.0001</serialnumber>
+    <toby>42</toby>
+    <accountid>571</accountid>
+    <contraid>3472</contraid>
+    <debitamount>0</debitamount>
+    <creditamount>961.38</creditamount>
+    <assessablevalue>6008.62</assessablevalue>
+  </Insert>
+  <Insert Table="refmaster" IDColumnName="SrlNo" GenID8Remote="Yes">
+    <serialnumber>32795.0001</serialnumber>
+    <accountid>3472</accountid>
+    <refdate>06/22/2026 19:09</refdate>
+    <duedate>6/22/2026 00:00</duedate>
+    <reftype>46</reftype>
+    <refname>14523.0001</refname>
+    <toby>43</toby>
+    <debitamount>6970</debitamount>
+    <creditamount>0</creditamount>
+  </Insert>
+  <Update Table="saleheader">
+    <tpchannel></tpchannel>
+    <tpvchno></tpvchno>
+    <gstinnumberecommerce></gstinnumberecommerce>
+    <gstinnumbercustomer></gstinnumbercustomer>
+    <businesstype>848</businesstype>
+    <placeofsupply>2</placeofsupply>
+    <otherswentry>0</otherswentry>
+    <mobiwallet></mobiwallet>
+    <remarks></remarks>
+    <tripid>0.0000</tripid>
+    <preparedate>1900-01-01T00:00:00</preparedate>
+    <prepareuser>0</prepareuser>
+    <pmntdate>1900-01-01T00:00:00</pmntdate>
+    <pmntuser>0</pmntuser>
+    <delivereduser>0</delivereduser>
+    <assignuser>0</assignuser>
+    <hdserial>0</hdserial>
+    <billedto>659</billedto>
+    <localityid>1</localityid>
+    <streetid>1</streetid>
+    <streetnumber></streetnumber>
+    <packages>0</packages>
+    <addresstype>648</addresstype>
+    <deliverytype>77</deliverytype>
+    <discountcouponid></discountcouponid>
+    <salemode>1</salemode>
+    <reservationid></reservationid>
+    <batchid>000001</batchid>
+    <link></link>
+    <auditremarks></auditremarks>
+    <auditlocation>0</auditlocation>
+    <auditdate>1900-01-01T00:00:00</auditdate>
+    <auditby>0</auditby>
+    <isaudited>false</isaudited>
+    <deliverystatus>0</deliverystatus>
+    <deliverdatetime>1900-01-01T00:00:00</deliverdatetime>
+    <assigndatetime>2026-06-22T19:09:00</assigndatetime>
+    <driverid>0</driverid>
+    <deliverydatetime>2026-06-22T19:09:00</deliverydatetime>
+    <stationid>1</stationid>
+    <udffield10></udffield10>
+    <udffield9></udffield9>
+    <udffield8></udffield8>
+    <udffield7></udffield7>
+    <udffield6></udffield6>
+    <udffield5></udffield5>
+    <udffield4></udffield4>
+    <udffield3></udffield3>
+    <udffield2></udffield2>
+    <udffield1></udffield1>
+    <tagoftable></tagoftable>
+    <servicemodeid>1</servicemodeid>
+    <duedate>2026-06-22T00:00:00</duedate>
+    <pricelistid>1</pricelistid>
+    <taxtotal>961.3800</taxtotal>
+    <subtotal>6970.0000</subtotal>
+    <qtytotal>2.0000</qtytotal>
+    <status>2</status>
+    <recorddatetime>2026-06-22T19:09:00</recorddatetime>
+    <userid>1</userid>
+    <modifylocationid>1</modifylocationid>
+    <locationid>1</locationid>
+    <createlocationid>1</createlocationid>
+    <sessionid>0003CR</sessionid>
+    <companyid>1</companyid>
+    <accountserialnumber>32795.0001</accountserialnumber>
+    <saleaccountid>3</saleaccountid>
+    <isprinted>0</isprinted>
+    <crmpointstoparent>0.000</crmpointstoparent>
+    <crmpoints>0.000</crmpoints>
+    <billamount>6970.000</billamount>
+    <roundoffamt>0.000</roundoffamt>
+    <billreference></billreference>
+    <narration>Temp Memo-14523.0001</narration>
+    <pincode></pincode>
+    <countryid>1</countryid>
+    <stateid>1</stateid>
+    <cityid>1</cityid>
+    <address3></address3>
+    <address2></address2>
+    <address1></address1>
+    <companyname>Anthropic Studios</companyname>
+    <linkcustomerid>00001</linkcustomerid>
+    <customerid>00243</customerid>
+    <soserialnumber>0.0000</soserialnumber>
+    <datetimeout>2026-06-22T19:09:00</datetimeout>
+    <datetimein>2026-06-22T19:09:00</datetimein>
+    <noofpax>1</noofpax>
+    <tablename>MEMBER</tablename>
+    <layoutid>37</layoutid>
+    <voucherid>16</voucherid>
+    <vchnumber>4</vchnumber>
+    <vchidymd>26</vchidymd>
+    <vchidprefix></vchidprefix>
+    <voucherdate>2026-06-22T19:09:00</voucherdate>
+    <serialnumber>14523.0001</serialnumber>
+    <Where><![CDATA[ SerialNumber= 14523.0001]]></Where>
+  </Update>
+  <Update Table="restkot">
+    <orderserve>1900-01-01T00:00:00</orderserve>
+    <orderdone>1900-01-01T00:00:00</orderdone>
+    <orderselected>1900-01-01T00:00:00</orderselected>
+    <newkotnumber>4</newkotnumber>
+    <kotidymd>26</kotidymd>
+    <kotidprefix></kotidprefix>
+    <statusid>0</statusid>
+    <deliverydatetime>2026-06-22T19:09:00</deliverydatetime>
+    <sessionid>0003CR</sessionid>
+    <modifylocationid>1</modifylocationid>
+    <locationid>1</locationid>
+    <createlocationid>1</createlocationid>
+    <kotdatetime>2026-06-22T19:09:00</kotdatetime>
+    <serialnumber>14513.0001</serialnumber>
+    <Where><![CDATA[ SerialNumber = 14513.0001]]></Where>
+  </Update>
+  <Delete Table="saledetail">
+    <Where><![CDATA[ SerialNumber= 14523.0001]]></Where>
+  </Delete>
+  <Insert Table="saledetail" IDColumnName="SrlNo" GenID8Remote="Yes">
+    <serialnumber>14523.0001</serialnumber>
+    <saletype>4</saletype>
+    <productid>000E</productid>
+    <childid>0000</childid>
+    <locationcode>000</locationcode>
+    <modifierproductid>000E</modifierproductid>
+    <warehouseid>1</warehouseid>
+    <quantity>1.000</quantity>
+    <mrp>6950.000</mrp>
+    <salerate>6950.000</salerate>
+    <remarks></remarks>
+    <salespersonid>1</salespersonid>
+    <taxid>3</taxid>
+    <taxrate>16.000</taxrate>
+    <includeinrate>True</includeinrate>
+    <taxid1>571</taxid1>
+    <taxrate1>13.793103</taxrate1>
+    <taxamount1>958.620</taxamount1>
+    <taxid2>0</taxid2>
+    <taxrate2>0.000000</taxrate2>
+    <taxamount2>0.000</taxamount2>
+    <taxid3>0</taxid3>
+    <taxrate3>0.000000</taxrate3>
+    <taxamount3>0.000</taxamount3>
+    <taxid4>0</taxid4>
+    <taxrate4>0.000000</taxrate4>
+    <taxamount4>0.000</taxamount4>
+    <discountproduct>0.000</discountproduct>
+    <discountmanual>0.000</discountmanual>
+    <discountfinal>0.000</discountfinal>
+    <finalsalerate>6950.000000000</finalsalerate>
+    <perunitid>1</perunitid>
+    <isprinted>1</isprinted>
+    <menuid>13</menuid>
+    <kotnumber>14513.0001</kotnumber>
+    <cancellationreasonid>0</cancellationreasonid>
+    <printerid>1</printerid>
+    <stationid>1</stationid>
+    <soserialnumber>0.0000</soserialnumber>
+    <alternateqty>0.000</alternateqty>
+    <alternateunitid>1</alternateunitid>
+    <conversionfactor>1.000</conversionfactor>
+    <unitid>1</unitid>
+    <inputrate>6950.000</inputrate>
+    <inputrateunitid>1</inputrateunitid>
+    <inputrateperqty>1.000</inputrateperqty>
+    <productdiscount>0.000</productdiscount>
+    <customerdiscount>0.000</customerdiscount>
+    <pricelistdiscount>0.000</pricelistdiscount>
+    <spcommpercent>0.00</spcommpercent>
+    <spcommamt>0.000</spcommamt>
+    <schemeid>1</schemeid>
+    <schemediscpercent>0.00</schemediscpercent>
+    <schemediscamt>0.000</schemediscamt>
+    <scserialnumber>0.0000</scserialnumber>
+    <chargespercent>0.00</chargespercent>
+    <chargesamount>0.000</chargesamount>
+    <seatid>1</seatid>
+    <voiddatetime>1/1/1900</voiddatetime>
+    <userid>1</userid>
+    <voiduserid>0</voiduserid>
+    <ordernumber></ordernumber>
+    <userstationid>1</userstationid>
+    <calcmethod>151</calcmethod>
+    <taxablevalue1>5991.380</taxablevalue1>
+    <taxablevalue2>0.000</taxablevalue2>
+    <taxablevalue3>0.000</taxablevalue3>
+    <taxablevalue4>0.000</taxablevalue4>
+    <statusid>0</statusid>
+  </Insert>
+  <Insert Table="saledetail" IDColumnName="SrlNo" GenID8Remote="Yes">
+    <serialnumber>14523.0001</serialnumber>
+    <saletype>4</saletype>
+    <productid>000K</productid>
+    <childid>0000</childid>
+    <locationcode>000</locationcode>
+    <modifierproductid>000K</modifierproductid>
+    <warehouseid>1</warehouseid>
+    <quantity>1.000</quantity>
+    <mrp>20.000</mrp>
+    <salerate>20.000</salerate>
+    <remarks></remarks>
+    <salespersonid>1</salespersonid>
+    <taxid>3</taxid>
+    <taxrate>16.000</taxrate>
+    <includeinrate>True</includeinrate>
+    <taxid1>571</taxid1>
+    <taxrate1>13.793103</taxrate1>
+    <taxamount1>2.760</taxamount1>
+    <taxid2>0</taxid2>
+    <taxrate2>0.000000</taxrate2>
+    <taxamount2>0.000</taxamount2>
+    <taxid3>0</taxid3>
+    <taxrate3>0.000000</taxrate3>
+    <taxamount3>0.000</taxamount3>
+    <taxid4>0</taxid4>
+    <taxrate4>0.000000</taxrate4>
+    <taxamount4>0.000</taxamount4>
+    <discountproduct>0.000</discountproduct>
+    <discountmanual>0.000</discountmanual>
+    <discountfinal>0.000</discountfinal>
+    <finalsalerate>20.000000000</finalsalerate>
+    <perunitid>1</perunitid>
+    <isprinted>1</isprinted>
+    <menuid>13</menuid>
+    <kotnumber>14513.0001</kotnumber>
+    <cancellationreasonid>0</cancellationreasonid>
+    <printerid>1</printerid>
+    <stationid>1</stationid>
+    <soserialnumber>0.0000</soserialnumber>
+    <alternateqty>0.000</alternateqty>
+    <alternateunitid>1</alternateunitid>
+    <conversionfactor>1.000</conversionfactor>
+    <unitid>1</unitid>
+    <inputrate>20.000</inputrate>
+    <inputrateunitid>1</inputrateunitid>
+    <inputrateperqty>1.000</inputrateperqty>
+    <productdiscount>0.000</productdiscount>
+    <customerdiscount>0.000</customerdiscount>
+    <pricelistdiscount>0.000</pricelistdiscount>
+    <spcommpercent>0.00</spcommpercent>
+    <spcommamt>0.000</spcommamt>
+    <schemeid>1</schemeid>
+    <schemediscpercent>0.00</schemediscpercent>
+    <schemediscamt>0.000</schemediscamt>
+    <scserialnumber>0.0000</scserialnumber>
+    <chargespercent>0.00</chargespercent>
+    <chargesamount>0.000</chargesamount>
+    <seatid>1</seatid>
+    <voiddatetime>1/1/1900</voiddatetime>
+    <userid>1</userid>
+    <voiduserid>0</voiduserid>
+    <ordernumber></ordernumber>
+    <userstationid>1</userstationid>
+    <calcmethod>151</calcmethod>
+    <taxablevalue1>17.240</taxablevalue1>
+    <taxablevalue2>0.000</taxablevalue2>
+    <taxablevalue3>0.000</taxablevalue3>
+    <taxablevalue4>0.000</taxablevalue4>
+    <statusid>0</statusid>
+  </Insert>
+  <Delete Table="subscriptionmaster">
+    <Where><![CDATA[ SerialNumber= 14523.0001]]></Where>
+  </Delete>
+  <Delete Table="jointable">
+    <Where><![CDATA[TableNameTo =''MEMBER'']]></Where>
+  </Delete>
+  <Delete Table="salepayment">
+    <Where><![CDATA[Serialnumber = 14523.0001]]></Where>
+  </Delete>
+  <Insert Table="salepayment" IDColumnName="SrlNo" GenID8Remote="Yes">
+    <serialnumber>14523.0001</serialnumber>
+    <mopid>2</mopid>
+    <amount>6970</amount>
+    <tenderamount>0</tenderamount>
+    <returnamount>0</returnamount>
+    <bankname></bankname>
+    <documentno></documentno>
+    <remarks />
+  </Insert>
+  <Delete Table="chargesdetail">
+    <Where><![CDATA[ SerialNumber= 14523.0001 AND VoucherID = 16]]></Where>
+  </Delete>
+</Sql>',@LocationID=N'15',@Priority=0
+
+SELECT SH.VchNumber,LTRIM(RTRIM((CASE WHEN SH.VchIdPrefix <> '' THEN SH.VchIdPrefix + '/' ELSE '' END) + (CASE WHEN DataLength(SH.VchIDYMD) > 2 THEN SH.VchIDYMD + '/' ELSE '' END) +  CONVERT(Char, SH.VchNumber))) AS VoucherNumber,SH.VchIDPrefix,SH.VchIDYMD,SH.VoucherID, SH.AccountSerialNumber,isNull(RF.AccountID,0) as AccountID, isNull(RefName,'') as RefName FROM SaleHeader SH LEFT OUTER JOIN RefMaster RF On SH.AccountSerialNumber=RF.SerialNumber  WHERE SH.SerialNumber = 14523.0001
+
+
+UPDATE TransactionMaster SET VchNumber = '4',VchIDPrefix = '', VchIDYMD = 26,VoucherID = 16 WHERE SerialNumber = 32795.0001;
+
+UPDATE RefMaster SET RefName = '26/4' WHERE SerialNumber = 32795.0001 AND RefName='14523.0001';
+
+UPDATE SaleHeader SET BillReference = '26/4' WHERE SerialNumber = '14523.0001';
+
+UPDATE AutoNumber SET LastNumber = LastNumber + 1 WHERE TableName = 'OutboxData' AND FieldName = 'ID'SELECT LastNumber FROM AutoNumber WHERE TableName = 'OutboxData' AND FieldName = 'ID'
+
+
+exec sp_executesql N'insert into outboxdata (ID, outboxxml, LocationID, Priority) values(@ID, @sXml, @LocationID, @Priority)',N'@ID float,@sXml nvarchar(370),@LocationID nvarchar(2),@Priority int',@ID=33654.000099999997,@sXml=N'<Sql Version="2.0878">
+  <sql>UPDATE TransactionMaster SET VchNumber = ''4'',VchIDPrefix = '''', VchIDYMD = 26,VoucherID = 16 WHERE SerialNumber = 32795.0001</sql>
+  <sql>UPDATE RefMaster SET RefName = ''26/4'' WHERE SerialNumber = 32795.0001 AND RefName=''14523.0001''</sql>
+  <sql>UPDATE SaleHeader SET BillReference = ''26/4'' WHERE SerialNumber = ''14523.0001''</sql>
+</Sql>',@LocationID=N'15',@Priority=0
+
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; EXEC sp_TouchPOSBillPrint '', '', 'Sale Invoice', '' ,2, 2, 2, 3, 14523.0001, 'dd-MMM-yyyy', 'hh:mm tt' , 'D:\FusionERP8\FR6Share\', '0003CR'; UPDATE SaleHeader Set IsPrinted = IsPrinted + 1 WHERE SerialNumber=14523.0001
+
+
+
+
+
+
+
+
+
+
+
+

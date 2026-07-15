@@ -1,0 +1,28 @@
+# Environment files — never commit real secrets.
+**/.env
+**/.env.local
+
+# Node / Next.js
+**/node_modules/
+**/.next/
+**/out/
+**/dist/
+**/build/
+
+# Python
+**/.venv/
+**/__pycache__/
+**/*.pyc
+
+# Build / publish artifacts
+**/publish/
+*.zip
+
+# Generated receipt PDFs (runtime artifacts; contain member PII)
+receipts/
+
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log

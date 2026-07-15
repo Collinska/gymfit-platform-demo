@@ -1,0 +1,103 @@
+SELECT CustomerMaster.CountryID, CustomerMaster.CustomerTypeID, CustomerMaster.PriceListID, CustomerMaster.StreetID, CustomerMaster.LocalityID, 
+CustomerMaster.AccountID, CustomerMaster.CityID, CustomerMaster.StateID, CustomerMaster.IsFixed, CustomerMaster.CardTypeID, 
+CustomerMaster.CustomerID, CustomerMaster.AllowCreditSale, CustomerMaster.LinkID, CustomerMaster.BusinessType, CustomerMaster.Gender, 
+CustomerMaster.SalutationID, CustomerMaster.LocationIDMain, CustomerMaster.Nationality, SalutationID.FormatType AS SalutationName, 
+CustomerMaster.FirstName, CustomerMaster.LastName, CustomerMaster.CardID, CustomerMaster.CompanyName, CustomerTypeID.CustomerTypeName AS 
+CustomerTypeName, CardTypeID.CardTypeName AS CardTypeName, AllowCreditSale.YesNoName AS AllowCreditSaleName, AccountID.AccountName AS AccountName, 
+CustomerMaster.OpeningPoint, CustomerMaster.CardIssueDate, CustomerMaster.CardExpiryDate, LinkID.CustomerName AS LinkIDName, 
+PriceListID.PriceListName AS PriceList, CustomerMaster.TeamID, CustomerMaster.StreetNumber, StreetID.StreetName AS StreetName, 
+CustomerMaster.Address1, CustomerMaster.Address2, CustomerMaster.Address3, LocalityID.LocalityName AS LocalityName, LocationIDMain.LocationName AS 
+RelatedLocation, CityID.CityName AS CityName, StateID.StateName AS StateName, CountryID.CountryName AS CountryName, CustomerMaster.Pincode, 
+CustomerMaster.Phone, CustomerMaster.Mobile, CustomerMaster.Fax, CustomerMaster.Email, CustomerMaster.Website, CustomerMaster.GSTINNo, BusinessType.FormatType AS BusinessTypeName, Nationality.DataName AS NationalityName, Gender.FormatType AS GenderName, CustomerMaster.BirthDate, CustomerMaster.SpouseName, CustomerMaster.AnniversaryDate, CustomerMaster.POSRemarks, CustomerMaster.Picture1, CustomerMaster.Picture2 FROM CustomerMaster LEFT JOIN AccountMaster AS AccountID ON AccountID.AccountID = CustomerMaster.AccountID  LEFT JOIN CardTypeMaster AS CardTypeID ON CardTypeID.CardTypeID = CustomerMaster.CardTypeID  LEFT JOIN CityMaster AS CityID ON CityID.CityID = CustomerMaster.CityID  LEFT JOIN CountryMaster AS CountryID ON CountryID.CountryID = CustomerMaster.CountryID  LEFT JOIN CustomerMaster AS LinkID ON LinkID.CustomerID = CustomerMaster.LinkID  LEFT JOIN CustomerTypeMaster AS CustomerTypeID ON CustomerTypeID.CustomerTypeID = CustomerMaster.CustomerTypeID  LEFT JOIN FormatMaster AS BusinessType ON BusinessType.FormatID = CustomerMaster.BusinessType  LEFT JOIN FormatMaster AS SalutationID ON SalutationID.FormatID = CustomerMaster.SalutationID  LEFT JOIN LocalityMaster AS LocalityID ON LocalityID.LocalityID = CustomerMaster.LocalityID  LEFT JOIN LocationMaster AS LocationIDMain ON LocationIDMain.LocationId = CustomerMaster.LocationIDMain  LEFT JOIN MatrixListMaster AS Nationality ON Nationality.DataID = CustomerMaster.Nationality  LEFT JOIN PriceListMaster AS PriceListID ON PriceListID.PriceListID = CustomerMaster.PriceListID  LEFT JOIN StateMaster AS StateID ON StateID.StateID = CustomerMaster.StateID  LEFT JOIN StreetMaster AS StreetID ON StreetID.StreetID = CustomerMaster.StreetID  LEFT JOIN YesNoMaster AS AllowCreditSale ON AllowCreditSale.YesNoID = CustomerMaster.AllowCreditSale  LEFT JOIN FormatMaster AS Gender ON Gender.FormatID = CustomerMaster.Gender  WHERE CustomerMaster.FirstName = N'Claude' AND CustomerMaster.LastName = N'' AND CustomerMaster.CardID = N''
+
+
+SELECT CustomerName FROM CustomerMaster WHERE CustomerMaster.CardID = N'00001' AND CustomerID <> N''
+
+SELECT CustomerMaster.CountryID, CustomerMaster.CustomerTypeID, CustomerMaster.PriceListID, CustomerMaster.StreetID, CustomerMaster.LocalityID, 
+CustomerMaster.AccountID, CustomerMaster.CityID, CustomerMaster.StateID, CustomerMaster.IsFixed, CustomerMaster.CardTypeID, 
+CustomerMaster.CustomerID, CustomerMaster.AllowCreditSale, CustomerMaster.LinkID, CustomerMaster.BusinessType, CustomerMaster.Gender, 
+CustomerMaster.SalutationID, CustomerMaster.LocationIDMain, CustomerMaster.Nationality, SalutationID.FormatType AS SalutationName, 
+CustomerMaster.FirstName, CustomerMaster.LastName, CustomerMaster.CardID, CustomerMaster.CompanyName, CustomerTypeID.CustomerTypeName AS 
+CustomerTypeName, CardTypeID.CardTypeName AS CardTypeName, AllowCreditSale.YesNoName AS AllowCreditSaleName, AccountID.AccountName AS AccountName, 
+CustomerMaster.OpeningPoint, CustomerMaster.CardIssueDate, CustomerMaster.CardExpiryDate, LinkID.CustomerName AS LinkIDName, 
+PriceListID.PriceListName AS PriceList, CustomerMaster.TeamID, CustomerMaster.StreetNumber, StreetID.StreetName AS StreetName, 
+CustomerMaster.Address1, CustomerMaster.Address2, CustomerMaster.Address3, LocalityID.LocalityName AS LocalityName, LocationIDMain.LocationName AS 
+RelatedLocation, CityID.CityName AS CityName, StateID.StateName AS StateName, CountryID.CountryName AS CountryName, CustomerMaster.Pincode, 
+CustomerMaster.Phone, CustomerMaster.Mobile, CustomerMaster.Fax, CustomerMaster.Email, CustomerMaster.Website, CustomerMaster.GSTINNo, BusinessType.FormatType AS BusinessTypeName, Nationality.DataName AS NationalityName, Gender.FormatType AS GenderName, CustomerMaster.BirthDate, CustomerMaster.SpouseName, CustomerMaster.AnniversaryDate, CustomerMaster.POSRemarks, CustomerMaster.Picture1, CustomerMaster.Picture2 FROM CustomerMaster LEFT JOIN AccountMaster AS AccountID ON AccountID.AccountID = CustomerMaster.AccountID  LEFT JOIN CardTypeMaster AS CardTypeID ON CardTypeID.CardTypeID = CustomerMaster.CardTypeID  LEFT JOIN CityMaster AS CityID ON CityID.CityID = CustomerMaster.CityID  LEFT JOIN CountryMaster AS CountryID ON CountryID.CountryID = CustomerMaster.CountryID  LEFT JOIN CustomerMaster AS LinkID ON LinkID.CustomerID = CustomerMaster.LinkID  LEFT JOIN CustomerTypeMaster AS CustomerTypeID ON CustomerTypeID.CustomerTypeID = CustomerMaster.CustomerTypeID  LEFT JOIN FormatMaster AS BusinessType ON BusinessType.FormatID = CustomerMaster.BusinessType  LEFT JOIN FormatMaster AS SalutationID ON SalutationID.FormatID = CustomerMaster.SalutationID  LEFT JOIN LocalityMaster AS LocalityID ON LocalityID.LocalityID = CustomerMaster.LocalityID  LEFT JOIN LocationMaster AS LocationIDMain ON LocationIDMain.LocationId = CustomerMaster.LocationIDMain  LEFT JOIN MatrixListMaster AS Nationality ON Nationality.DataID = CustomerMaster.Nationality  LEFT JOIN PriceListMaster AS PriceListID ON PriceListID.PriceListID = CustomerMaster.PriceListID  LEFT JOIN StateMaster AS StateID ON StateID.StateID = CustomerMaster.StateID  LEFT JOIN StreetMaster AS StreetID ON StreetID.StreetID = CustomerMaster.StreetID  LEFT JOIN YesNoMaster AS AllowCreditSale ON AllowCreditSale.YesNoID = CustomerMaster.AllowCreditSale  LEFT JOIN FormatMaster AS Gender ON Gender.FormatID = CustomerMaster.Gender  WHERE CustomerMaster.CardID = N'0000100' AND CustomerMaster.FirstName = N'Claude' AND CustomerMaster.LastName = N'Anthropic'
+
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'#TempStk') AND type in (N'U')) DROP TABLE #TempStk; IF  EXISTS (SELECT * FROM tempdb..sysObjects WHERE Name = N'#TempStk') DROP TABLE Tempdb..#TempStk; WITH Hier (MainID, ParentID) AS (SELECT DISTINCT GroupID, ParentGroupID FROM GroupMaster WHERE GroupID = 6 UNION ALL SELECT GroupID, ParentGroupID FROM GroupMaster AS G JOIN Hier AS H ON H.MainID = ParentGroupID WHERE GroupID <> 6) SELECT * INTO #TempStk FROM Hier SELECT AccountName AS [Account_Name], GroupName AS [Group_Name], CONVERT(Decimal(16,2), ABS(Debitamount - CreditAmount)) AS [Balance], A.GroupID, AccountName, AccountID FROM AccountWithGroup AS A   WHERE A.GroupID NOT IN (SELECT MainID FROM #TempStk)  ORDER BY [Account_Name], [Group_Name], [Balance]
+
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'#TempStk') AND type in (N'U')) DROP TABLE #TempStk; IF EXISTS (SELECT * FROM tempdb..sysObjects WHERE Name = '#TempStk') DROP TABLE Tempdb..#TempStk; WITH Hier (MainID, ParentID) AS (SELECT DISTINCT GroupID, ParentGroupID FROM GroupMaster WHERE GroupID = 6 UNION ALL SELECT GroupID, ParentGroupID FROM GroupMaster AS G JOIN Hier AS H ON H.MainID = ParentGroupID WHERE GroupID <> 6) SELECT * INTO #TempStk FROM Hier ;SELECT A.AccountName AS [Account] FROM AccountMaster AS A INNER JOIN GroupMaster AS G ON A.GroupId = G.GroupID WHERE A.AccountName = N'Claude Anthropic' AND A.GroupID NOT IN (SELECT MainID FROM #TempStk)
+
+SELECT A.AccountName AS [Account] FROM AccountMaster AS A WHERE A.AccountName = N'Claude Anthropic'
+
+SELECT AccountMaster.CountryID, AccountMaster.PriceListID, AccountMaster.VATClassID, AccountMaster.StreetID, AccountMaster.LocalityID, 
+AccountMaster.AccountID, AccountMaster.CityID, AccountMaster.StateID, AccountMaster.GroupID, AccountMaster.IsFixed, AccountMaster.CostCenter, 
+AccountMaster.BillWiseDetail, AccountMaster.UseInPayroll, AccountMaster.IntRatePer, AccountMaster.AccountName, GroupID.GroupName AS GroupName, 
+CostCenter.YesNoName AS CostCenterName, BillWiseDetail.YesNoName AS BillWiseDetailName, PriceListID.PriceListName AS PriceList, 
+UseInPayroll.YesNoName AS UseInPayrollName, AccountMaster.CreditDays, AccountMaster.CreditLimit, AccountMaster.IntRate, IntRatePer.FormatType AS IntRatePerName, AccountMaster.TeamID, AccountMaster.TeamIDReport, AccountMaster.StreetNumber, StreetID.StreetName AS StreetName, AccountMaster.Address1, AccountMaster.Address2, AccountMaster.Address3, LocalityID.LocalityName AS LocalityName, CityID.CityName AS CityName, StateID.StateName AS StateName, CountryID.CountryName AS CountryName, AccountMaster.Pincode, AccountMaster.Phone, AccountMaster.Email, AccountMaster.Website, AccountMaster.ContactPerson, AccountMaster.ContactPersonMobile, AccountMaster.CSTNo, AccountMaster.VATNo, AccountMaster.PANNo, AccountMaster.ServiceTaxNo, AccountMaster.GSTINNo, VATClassID.VATClassName AS VATClassName FROM AccountMaster LEFT JOIN CityMaster AS CityID ON CityID.CityID = AccountMaster.CityID  LEFT JOIN CountryMaster AS CountryID ON CountryID.CountryID = AccountMaster.CountryID  LEFT JOIN FormatMaster AS IntRatePer ON IntRatePer.FormatID = AccountMaster.IntRatePer  LEFT JOIN GroupMaster AS GroupID ON GroupID.GroupID = AccountMaster.GroupID  LEFT JOIN LocalityMaster AS LocalityID ON LocalityID.LocalityID = AccountMaster.LocalityID  LEFT JOIN PriceListMaster AS PriceListID ON PriceListID.PriceListID = AccountMaster.PriceListID  LEFT JOIN StateMaster AS StateID ON StateID.StateID = AccountMaster.StateID  LEFT JOIN StreetMaster AS StreetID ON StreetID.StreetID = AccountMaster.StreetID  LEFT JOIN YesNoMaster AS BillWiseDetail ON BillWiseDetail.YesNoID = AccountMaster.BillWiseDetail  LEFT JOIN YesNoMaster AS CostCenter ON CostCenter.YesNoID = AccountMaster.CostCenter  LEFT JOIN YesNoMaster AS UseInPayroll ON UseInPayroll.YesNoID = AccountMaster.UseInPayroll  LEFT JOIN VATClassMaster AS VATClassID ON VATClassID.VATClassID = AccountMaster.VATClassID  WHERE AccountMaster.AccountName = N'Claude Anthropic'
+
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'#TempStk') AND type in (N'U')) DROP TABLE #TempStk; IF EXISTS (SELECT * FROM tempdb..sysObjects WHERE Name = '#TempStk') DROP TABLE Tempdb..#TempStk; WITH Hier (MainID, ParentID) AS (SELECT DISTINCT GroupID, ParentGroupID FROM GroupMaster WHERE GroupID = 6 UNION ALL SELECT GroupID, ParentGroupID FROM GroupMaster AS G JOIN Hier AS H ON H.MainID = ParentGroupID WHERE GroupID <> 6) SELECT * INTO #TempStk FROM Hier ;SELECT A.AccountName AS [Account] FROM AccountMaster AS A INNER JOIN GroupMaster AS G ON A.GroupId = G.GroupID WHERE A.AccountName = N'Claude Anthropic' AND A.GroupID NOT IN (SELECT MainID FROM #TempStk)
+
+
+SELECT AccountMaster.Email, AccountMaster.AccountName FROM AccountMaster WHERE AccountMaster.Email = N'Claude@gmail.com' AND AccountMaster.AccountName <> N'Claude Anthropic'
+
+UPDATE Server SET RunningMasterNumber = RunningMasterNumber + 1SELECT RunningMasterNumber FROM Server
+
+exec sp_executesql N'insert into accountmaster(countryid,pricelistid,vatclassid,streetid,localityid,cityid,stateid,groupid,costcenter,billwisedetail,useinpayroll,intrateper,accountname,creditlimit,intrate,teamid,teamidreport,email,vatno,loguser,loglocation,logsession,MLNumber) values (@countryid,@pricelistid,@vatclassid,@streetid,@localityid,@cityid,@stateid,@groupid,@costcenter,@billwisedetail,@useinpayroll,@intrateper,@accountname,@creditlimit,@intrate,@teamid,@teamidreport,@email,@vatno,@loguser,@loglocation,@logsession,@MLNumber);',N'@countryid nvarchar(1),@pricelistid nvarchar(1),@vatclassid nvarchar(1),@streetid nvarchar(1),@localityid nvarchar(1),@cityid nvarchar(1),@stateid nvarchar(1),@groupid nvarchar(1),@costcenter nvarchar(1),@billwisedetail nvarchar(1),@useinpayroll nvarchar(1),@intrateper nvarchar(3),@accountname nvarchar(16),@creditlimit nvarchar(4),@intrate nvarchar(3),@teamid nvarchar(4000),@teamidreport nvarchar(4000),@email nvarchar(16),@vatno nvarchar(13),@loguser nvarchar(1),@loglocation nvarchar(1),@logsession nvarchar(6),@MLNumber nvarchar(5)',@countryid=N'1',@pricelistid=N'1',@vatclassid=N'1',@streetid=N'1',@localityid=N'1',@cityid=N'1',@stateid=N'1',@groupid=N'8',@costcenter=N'0',@billwisedetail=N'1',@useinpayroll=N'0',@intrateper=N'356',@accountname=N'Claude Anthropic',@creditlimit=N'1.00',@intrate=N'.00',@teamid=N'',@teamidreport=N'',@email=N'Claude@gmail.com',@vatno=N'A004737337dj0',@loguser=N'1',@loglocation=N'1',@logsession=N'0003CR',@MLNumber=N'27650'
+
+SELECT L.LocationID, 0 AS SyncData, S.LocationID AS Parent FROM  LocationMaster AS L , Server AS S WHERE S.LocationID <> L.LocationID AND L.CreateMLData = 1 ORDER BY L.LocationID
+
+
+UPDATE AutoNumber SET LastNumber = LastNumber + 1 WHERE TableName = 'OutboxData' AND FieldName = 'ID'SELECT LastNumber FROM AutoNumber WHERE TableName = 'OutboxData' AND FieldName = 'ID'
+
+exec sp_executesql N'insert into outboxdata (ID, outboxxml, LocationID, Priority) values(@ID, @sXml, @LocationID, @Priority)',N'@ID float,@sXml nvarchar(881),@LocationID nvarchar(2),@Priority int',@ID=33647.000099999997,@sXml=N'<Sql Version="2.0878">
+  <Insert Table="accountmaster" IDColumnName="AccountID">
+    <countryid>1</countryid>
+    <pricelistid>1</pricelistid>
+    <vatclassid>1</vatclassid>
+    <streetid>1</streetid>
+    <localityid>1</localityid>
+    <cityid>1</cityid>
+    <stateid>1</stateid>
+    <groupid>8</groupid>
+    <costcenter>0</costcenter>
+    <billwisedetail>1</billwisedetail>
+    <useinpayroll>0</useinpayroll>
+    <intrateper>356</intrateper>
+    <accountname>Claude Anthropic</accountname>
+    <creditlimit>1.00</creditlimit>
+    <intrate>.00</intrate>
+    <teamid></teamid>
+    <teamidreport></teamidreport>
+    <email>Claude@gmail.com</email>
+    <vatno>A004737337dj0</vatno>
+    <loguser>1</loguser>
+    <loglocation>1</loglocation>
+    <logsession>0003CR</logsession>
+    <MLNumber>27650</MLNumber>
+    <AccountID>3472</AccountID>
+  </Insert>
+</Sql>',@LocationID=N'15',@Priority=0
+
+exec sp_executesql N'UPDATE mastercreation  set defaultvalue=@defaultvalue  where TableID = 2 AND FieldID = 317;',N'@defaultvalue nvarchar(1)',@defaultvalue=N'1'
+
+
+SELECT TOP 1 * FROM mastercreation WHERE TableID = 2 AND FieldID = 317
+
+SELECT TOP 1 * FROM mastercreation WHERE TableID = 2 AND FieldID = 317
+
+
+exec sp_executesql N'UPDATE mastercreation  set defaultvalue=@defaultvalue  where TableID = 2 AND FieldID = 508;',N'@defaultvalue nvarchar(1)',@defaultvalue=N'1'
+
+
+
+
+
+
+
+
+
+
+
+
