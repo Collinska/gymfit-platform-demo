@@ -67,13 +67,26 @@ credentials anywhere in this deployment.**
   unlike the earlier Railway scaffold, these are no longer required even as
   placeholders (see the note at the bottom of `render.yaml` for why).
 
-## If something in `render.yaml` gets rejected
+## A real gotcha already hit once — noted here so it isn't repeated
 
-The Blueprint schema (`runtime: docker`, `rootDir`, `dockerfilePath`,
-`dockerContext`, `healthCheckPath`, `envVars` with `sync: false`) was
-verified against Render's own docs when this was written, not guessed from
-memory — but Render has renamed Blueprint fields before. If the dashboard's
-Blueprint preview errors on a specific key, check
+`dockerfilePath` and `dockerContext` are relative to `rootDir` once
+`rootDir` is set, **not** to the repo root — confirmed against
+[render.com/docs/monorepo-support](https://render.com/docs/monorepo-support)
+("Root-relative settings"). The first version of `render.yaml` had them
+repo-root-relative (`./erp_api/Dockerfile`), which Render then resolved as
+`rootDir` + that path = `erp_api/erp_api/Dockerfile` — a doubled path that
+failed the very first deploy with `no such file or directory`. Fixed now
+(`./Dockerfile` / `.`, both relative to `erp_api/`) — if you ever add
+another root-relative field (`buildCommand`, `startCommand`,
+`preDeployCommand`, `staticPublishPath`), remember it needs the same
+treatment.
+
+## If something else in `render.yaml` gets rejected
+
+The rest of the Blueprint schema (`runtime: docker`, `rootDir`,
+`healthCheckPath`, `envVars` with `sync: false`) was verified against
+Render's own docs when this was written. If the dashboard's Blueprint
+preview errors on a specific key, check
 [render.com/docs/blueprint-spec](https://render.com/docs/blueprint-spec) for
 the current name and fix `render.yaml` directly (it's a normal file in this
 repo) rather than falling back to manually clicking through service

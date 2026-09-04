@@ -24,10 +24,16 @@ services:
     # monorepo has erp_api/, frontend/, sync_worker/, demo/ side by side).
     rootDir: erp_api
 
-    # Both relative to the REPO ROOT, not to rootDir — a Render Blueprint
-    # quirk worth flagging explicitly, since it's easy to assume otherwise.
-    dockerfilePath: ./erp_api/Dockerfile
-    dockerContext: ./erp_api
+    # Once rootDir is set, Render treats dockerfilePath/dockerContext (and
+    # buildCommand/startCommand/etc.) as relative to THAT root, not the repo
+    # root — confirmed against render.com/docs/monorepo-support ("Root-
+    # relative settings"). Got this backwards on the first pass here: had
+    # them repo-root-relative (./erp_api/Dockerfile), which Render then
+    # resolved as rootDir + that path = erp_api/erp_api/Dockerfile — a
+    # doubled path that failed with "no such file or directory" on the
+    # first real deploy attempt. Relative to rootDir now, correctly:
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
 
     # Dockerfile's own CMD handles the start command (reads $PORT itself) —
     # deliberately no buildCommand/startCommand here. Render docs indicate
