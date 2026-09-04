@@ -1,0 +1,82 @@
+# Render Blueprint — GymFit erp_api, DEMO environment only.
+#
+# Must live at the repo root (Render's default Blueprint location) even
+# though the service itself is scoped to erp_api/ via rootDir/dockerContext
+# below — this repo is a monorepo (erp_api/, frontend/, sync_worker/, demo/).
+#
+# Schema verified against Render's own docs (render.com/docs/blueprint-spec,
+# render.com/docs/docker) at the time this was written — double-check against
+# current docs if Render's Blueprint validator rejects anything here; their
+# schema has changed field names before (e.g. "env" -> "runtime").
+#
+# Config-only: creating the actual Render service, connecting the GitHub
+# repo, and filling in real env var values all happen in the Render
+# dashboard — see RENDER_DEPLOY.md for that checklist.
+
+services:
+  - type: web
+    name: gymfit-erp-api-demo
+    runtime: docker
+    plan: free
+    region: oregon
+
+    # Governs which file changes trigger a rebuild for this service (a
+    # monorepo has erp_api/, frontend/, sync_worker/, demo/ side by side).
+    rootDir: erp_api
+
+    # Both relative to the REPO ROOT, not to rootDir — a Render Blueprint
+    # quirk worth flagging explicitly, since it's easy to assume otherwise.
+    dockerfilePath: ./erp_api/Dockerfile
+    dockerContext: ./erp_api
+
+    # Dockerfile's own CMD handles the start command (reads $PORT itself) —
+    # deliberately no buildCommand/startCommand here. Render docs indicate
+    # buildCommand doesn't apply to Docker services anyway (you can't
+    # customize a Dockerfile's build step), and the Dockerfile is already
+    # self-sufficient for start.
+
+    healthCheckPath: /health
+
+    envVars:
+      # DEMO_MODE gate — this is what actually keeps this deployment reading
+      # writing ONLY Supabase (the demo project), never a real ERP. See
+      # erp_api/DEMO_MODE.md for what this flag changes.
+      - key: DEMO_MODE
+        value: "true"
+
+      # ── Supabase (the DEMO project — vjrwjqvycxzwxqmnilck, never
+      # production) — from .env.demo (repo root). sync:false means you'll
+      # paste the real value into the Render dashboard yourself; it's never
+      # written into this file.
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_DB_HOST
+        sync: false
+      - key: SUPABASE_DB_PORT
+        value: "5432"
+      - key: SUPABASE_DB_NAME
+        value: postgres
+      - key: SUPABASE_DB_USER
+        sync: false
+      - key: SUPABASE_DB_PASSWORD
+        sync: false
+
+      # The deployed frontend's origin (Vercel demo domain) — for erp_api's
+      # CORS allow-list (see main.py). Unknown until the Vercel frontend is
+      # deployed; fill in after, then this service auto-redeploys since
+      # Render redeploys on env var changes.
+      - key: FRONTEND_URL
+        sync: false
+
+    # Note what's intentionally NOT here, and why: this repo's Railway
+    # scaffold (erp_api/.env.demo.railway.example) needed placeholder
+    # ENV_MODE/ERP_HOST/ERP_USER/ERP_PASSWORD/ERP_DATABASE values purely to
+    # satisfy sync_worker/config.py's build_config(), which validated them
+    # even for callers that only ever wanted the Postgres connection. That
+    # coupling is gone (see erp_api/gym_db.py) — db.py (the real SQL-Server
+    # ERP connection) now reads its own ERP_* env vars with safe defaults
+    # and never raises just because they're unset; it only fails, gracefully
+    # (a caught exception -> 500), if something actually tries to use it.
+    # DEMO_MODE never does.

@@ -1,0 +1,16 @@
+# Render builds from a fresh git clone, which never has these (gitignored) —
+# but a local `docker build` uses whatever's on disk, so this is a real
+# guard against baking real secrets into an image layer, not just tidiness.
+.env
+.env.*
+!.env.*.example
+
+__pycache__/
+*.pyc
+.venv/
+
+# Not needed inside the container.
+*.md
+start.bat
+test_api.ps1
+debug_schema.py
