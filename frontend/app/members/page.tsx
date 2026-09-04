@@ -30,7 +30,8 @@ function cfg(st: string) {
   return STATUS_CFG[(st as StatusKey)] ?? STATUS_CFG.no_membership;
 }
 
-/* ── Contextual action button ── */
+/* ── Contextual action button (Renew / Unfreeze) — omitted when there's no
+   status-specific action, since "View Profile" below always covers that. ── */
 function ActionButton({ st, erpId }: { st: string; erpId: unknown }) {
   const id = String(erpId ?? "");
   if (st === "expired" || st === "no_membership") {
@@ -53,12 +54,21 @@ function ActionButton({ st, erpId }: { st: string; erpId: unknown }) {
       </Link>
     );
   }
+  return null;
+}
+
+/* ── Always-present, unambiguously-labeled link into the member profile.
+   The contextual ActionButton's label changes with status (Renew/Unfreeze),
+   which reads as an action rather than navigation — this guarantees every
+   card has one obvious, consistently-labeled way in. ── */
+function ViewProfileButton({ erpId }: { erpId: unknown }) {
+  const id = String(erpId ?? "");
   return (
     <Link
       href={`/members/${id}`}
       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold hover:bg-slate-200 transition-colors whitespace-nowrap"
     >
-      View →
+      View Profile →
     </Link>
   );
 }
@@ -135,9 +145,11 @@ function MemberCard({ member }: { member: Dict }) {
             <MembershipBar member={member} st={st} />
           </div>
 
-          {/* Action button (always visible, like hotel's "Check-in" button) */}
-          <div className="shrink-0 pb-0.5">
+          {/* Actions: contextual (Renew/Unfreeze) when relevant, plus an
+              always-present, unambiguous "View Profile →" link. */}
+          <div className="shrink-0 pb-0.5 flex items-center gap-1.5">
             <ActionButton st={st} erpId={erpId} />
+            <ViewProfileButton erpId={erpId} />
           </div>
         </div>
 

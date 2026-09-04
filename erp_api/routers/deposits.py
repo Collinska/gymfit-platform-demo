@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from db import erp_conn
+import demo_mode
 
 log = logging.getLogger("erp_api.deposits")
 router = APIRouter(prefix="/erp/deposits", tags=["deposits"])
@@ -48,6 +49,13 @@ def create_deposit(body: CreateDepositRequest) -> CreateDepositResponse:
     if method_key not in PAYMENT_METHOD_ACCOUNTS:
         raise HTTPException(status_code=400, detail=f"Invalid payment method: {body.payment_method!r}")
     contra_account_id = PAYMENT_METHOD_ACCOUNTS[method_key]
+
+    if demo_mode.DEMO_MODE:
+        try:
+            result = demo_mode.create_deposit(body.account_id, body.amount, body.payment_method, body.narration)
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        return CreateDepositResponse(**result)
 
     today = datetime.now()
     vch_id_ymd = today.strftime("%y%m%d")   # e.g. "250623"

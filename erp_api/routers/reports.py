@@ -11,6 +11,7 @@ import pyodbc
 from fastapi import APIRouter, HTTPException, Query
 
 from db import erp_conn
+import demo_mode
 
 log = logging.getLogger("erp_api.reports")
 router = APIRouter(prefix="/erp/reports", tags=["reports"])
@@ -42,6 +43,9 @@ def sales_by_invoice(
     date_to:     str           = Query(..., description="YYYY-MM-DD"),
     location_id: Optional[int] = Query(None),
 ):
+    if demo_mode.DEMO_MODE:
+        return demo_mode.sales_by_invoice(date_from, date_to)
+
     sql = f"""
         SELECT
             sh.SerialNumber,
@@ -124,6 +128,9 @@ def sales_by_product(
     group_id:      Optional[int] = Query(None),
     department_id: Optional[int] = Query(None),
 ):
+    if demo_mode.DEMO_MODE:
+        return demo_mode.sales_by_product(date_from, date_to)
+
     sql = f"""
         SELECT
             sd.ProductID,
@@ -217,6 +224,10 @@ def day_audit(
     date:        str           = Query(default="", description="YYYY-MM-DD; defaults to today"),
     location_id: Optional[int] = Query(None),
 ):
+    if demo_mode.DEMO_MODE:
+        effective = date or __import__("datetime").date.today().isoformat()
+        return demo_mode.day_audit(effective)
+
     audit_date = date or "CAST(GETDATE() AS DATE)"
     date_param = date if date else None   # None → SQL uses GETDATE()
 
@@ -432,6 +443,9 @@ def revenue_summary(location_id: Optional[int] = Query(None)):
     """Total POS revenue across ALL product groups (memberships + retail + F&B),
     using the same paid-or-posted rule as the sales register. Member-count
     metrics stay in Supabase; this endpoint only covers money taken."""
+    if demo_mode.DEMO_MODE:
+        return demo_mode.revenue_summary()
+
     today       = date.today()
     start_this  = _month_start(today)
     start_next  = _add_months(start_this, 1)
@@ -563,6 +577,9 @@ def staff_performance(
 ):
     """Sales and deposits handled per staff user for the period. Sales use the
     same paid-or-posted rule as the rest of the reports so today's activity counts."""
+    if demo_mode.DEMO_MODE:
+        return demo_mode.staff_performance(date_from, date_to)
+
     loc = location_id
 
     sales_sql = f"""
@@ -633,6 +650,11 @@ def staff_performance(
 
 @router.get("/filters")
 def get_filters():
+    if demo_mode.DEMO_MODE:
+        # No product-group/department taxonomy exists in the demo schema —
+        # see the DEMO_MODE audit report. Empty filter lists, not an error.
+        return {"groups": [], "departments": []}
+
     sql_groups = """
         SELECT DISTINCT pgm.ProductGroupID, pgm.ProductGroupName
         FROM ProductGroupMaster pgm

@@ -16,6 +16,7 @@ from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
 from db import erp_conn
+import demo_mode
 
 # Reuse the Supabase connection details from sync_worker/config.py
 _SYNC_WORKER = os.path.join(
@@ -118,51 +119,72 @@ def gather_wrap_data(customer_id: str, month: str) -> dict:
     start, end = _month_bounds(month)
     month_label = datetime.strptime(month + "-01", "%Y-%m-%d").strftime("%B %Y")
 
-    # ── 1) Member info + 3) items (ERP) ──
-    with erp_conn() as erp:
-        cur = erp.cursor()
-        cur.execute(
-            "SELECT FirstName, LastName, Mobile, Email, CustomerID, AccountID "
-            "FROM CustomerMaster WHERE CustomerID = ?",
-            customer_id,
-        )
-        row = cur.fetchone()
+    # ── 1) Member info + 3) items — ERP normally, Supabase in DEMO_MODE ──
+    if demo_mode.DEMO_MODE:
+        identity = demo_mode.member_identity(customer_id)
         member = {
-            "first_name":  (row[0] or "").strip() if row else "",
-            "last_name":   (row[1] or "").strip() if row else "",
-            "mobile":      (row[2] or "").strip() if row else "",
-            "email":       (row[3] or "").strip() if row else "",
-            "customer_id": (row[4] or "").strip() if row else customer_id,
-            "account_id":  int(row[5]) if row and row[5] is not None else None,
-        } if row else {"customer_id": customer_id}
-
-        cur.execute(
-            f"""
-            SELECT pm.ProductName, sd.Quantity, sd.FinalSaleRate,
-                   (sd.FinalSaleRate * sd.Quantity) AS LineTotal, sh.VoucherDate
-            FROM SaleHeader sh
-            JOIN SaleDetail sd    ON sd.SerialNumber = sh.SerialNumber
-            JOIN ProductMaster pm ON pm.ProductID    = sd.ProductID
-            WHERE sh.CustomerID = ?
-              AND sh.TableName = N'MEMBER'
-              AND {_PAID}
-              AND sh.VoucherDate >= ? AND sh.VoucherDate < ?
-            ORDER BY sh.VoucherDate
-            """,
-            customer_id, start.isoformat(), end.isoformat(),
-        )
-        item_rows = cur.fetchall()
-
-    item_list = [
-        {
-            "product_name": str(r[0] or "").strip(),
-            "quantity":     float(r[1] or 0),
-            "rate":         float(r[2] or 0),
-            "line_total":   float(r[3] or 0),
-            "date":         str(r[4])[:10],
+            "first_name":  identity["first_name"] or "" if identity else "",
+            "last_name":   identity["last_name"] or "" if identity else "",
+            "mobile":      identity["mobile"] or "" if identity else "",
+            "email":       identity["email"] or "" if identity else "",
+            "customer_id": identity["erp_customer_id"] if identity else customer_id,
+            "account_id":  None,
         }
-        for r in item_rows
-    ]
+        # Section 2 below re-resolves this same id via its own connection —
+        # cheap, idempotent, and keeps this branch self-contained.
+        demo_conn = demo_mode.gym_conn()
+        try:
+            with demo_conn.cursor() as dc:
+                dc.execute("SELECT id FROM gym_members WHERE erp_customer_id = %s", (customer_id,))
+                drow = dc.fetchone()
+        finally:
+            demo_conn.close()
+        item_list = demo_mode.wrap_purchases(drow[0] if drow else None, start, end)
+    else:
+        with erp_conn() as erp:
+            cur = erp.cursor()
+            cur.execute(
+                "SELECT FirstName, LastName, Mobile, Email, CustomerID, AccountID "
+                "FROM CustomerMaster WHERE CustomerID = ?",
+                customer_id,
+            )
+            row = cur.fetchone()
+            member = {
+                "first_name":  (row[0] or "").strip() if row else "",
+                "last_name":   (row[1] or "").strip() if row else "",
+                "mobile":      (row[2] or "").strip() if row else "",
+                "email":       (row[3] or "").strip() if row else "",
+                "customer_id": (row[4] or "").strip() if row else customer_id,
+                "account_id":  int(row[5]) if row and row[5] is not None else None,
+            } if row else {"customer_id": customer_id}
+
+            cur.execute(
+                f"""
+                SELECT pm.ProductName, sd.Quantity, sd.FinalSaleRate,
+                       (sd.FinalSaleRate * sd.Quantity) AS LineTotal, sh.VoucherDate
+                FROM SaleHeader sh
+                JOIN SaleDetail sd    ON sd.SerialNumber = sh.SerialNumber
+                JOIN ProductMaster pm ON pm.ProductID    = sd.ProductID
+                WHERE sh.CustomerID = ?
+                  AND sh.TableName = N'MEMBER'
+                  AND {_PAID}
+                  AND sh.VoucherDate >= ? AND sh.VoucherDate < ?
+                ORDER BY sh.VoucherDate
+                """,
+                customer_id, start.isoformat(), end.isoformat(),
+            )
+            item_rows = cur.fetchall()
+
+        item_list = [
+            {
+                "product_name": str(r[0] or "").strip(),
+                "quantity":     float(r[1] or 0),
+                "rate":         float(r[2] or 0),
+                "line_total":   float(r[3] or 0),
+                "date":         str(r[4])[:10],
+            }
+            for r in item_rows
+        ]
     total_spent = round(sum(i["line_total"] for i in item_list), 2)
     items = (
         {"list": item_list, "total_spent": total_spent, "item_count": len(item_list)}

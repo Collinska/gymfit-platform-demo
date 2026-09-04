@@ -26,8 +26,10 @@ DURATION_MAP: dict[str, int] = {
     "day": 1,
     "weekly": 7,
     "week": 7,
+    "two weeks": 14,
     "monthly": 30,
     "month": 30,
+    "two months": 60,
     "three months": 90,
     "3 months": 90,
     "quarter": 90,
@@ -66,7 +68,13 @@ JOIN SaleDetail sd
     ON sd.SerialNumber = sh.SerialNumber
 JOIN ProductMaster pm
     ON pm.ProductID = sd.ProductID
-    AND pm.ProductGroupID = ?
+    AND (
+        pm.ProductGroupID = ?
+        -- Group 108 ("Other Fees") mixes real access products with admin
+        -- fees (Transaction Fee, Barcode Fee) — include ONLY the access
+        -- products here by ProductID, not the whole group.
+        OR pm.ProductID IN ('000G', '00P8', '00PE', '00PF')
+    )
 JOIN ProductGroupMaster pgm
     ON pgm.ProductGroupID = pm.ProductGroupID
 JOIN CustomerMaster cm
@@ -207,7 +215,17 @@ def upsert_member(cur, row: dict[str, Any]) -> int:
             email = EXCLUDED.email,
             card_id = EXCLUDED.card_id,
             card_expiry = EXCLUDED.card_expiry,
-            photo_url = EXCLUDED.photo_url,
+            -- ERP CustomerMaster.Picture1 is empty for every customer in this
+            -- deployment (confirmed: 0/3003 rows), so a plain overwrite here
+            -- silently wiped any photo uploaded through the app's own Photo
+            -- Upload feature on the very next sync. Only let the ERP value win
+            -- when it's actually non-empty; otherwise keep whatever Supabase
+            -- already has (an app-uploaded photo, or NULL if there is none).
+            photo_url = CASE
+                WHEN EXCLUDED.photo_url IS NOT NULL AND EXCLUDED.photo_url <> ''
+                THEN EXCLUDED.photo_url
+                ELSE gym_members.photo_url
+            END,
             is_active = EXCLUDED.is_active,
             updated_at = NOW()
         RETURNING id
@@ -243,6 +261,27 @@ def get_active_membership(cur, member_id: int):
     return cur.fetchone()
 
 
+# gym_memberships.erp_sale_serial is varchar(20) — real ERP serials look like
+# "14520.0001" (~10 chars), so a naive long suffix (e.g. an ISO date) can blow
+# the column limit and fail the INSERT outright.
+SERIAL_COLUMN_MAX_LEN = 20
+
+
+def disambiguate_serial(cur, original_serial: str) -> str:
+    """Produce a short, guaranteed-unique stand-in for `original_serial` that
+    fits the column limit, for the case where the original is already taken
+    by a different member (see the collision-guard note in activate_membership)."""
+    for n in range(1, 100):
+        suffix = f"-R{n}"
+        candidate = original_serial[: SERIAL_COLUMN_MAX_LEN - len(suffix)] + suffix
+        cur.execute("SELECT 1 FROM gym_memberships WHERE erp_sale_serial = %s", (candidate,))
+        if cur.fetchone() is None:
+            return candidate
+    # Practically unreachable (100 collisions on the same serial), but keep
+    # this total so the caller never gets an unhandled exception.
+    return original_serial[: SERIAL_COLUMN_MAX_LEN - 3] + "-RX"
+
+
 def activate_membership(cur, member_id: int, row: dict[str, Any], duration_days: int) -> None:
     existing = get_active_membership(cur, member_id)
     sale_date = row["VoucherDate"].date() if hasattr(row["VoucherDate"], "date") else row["VoucherDate"]
@@ -255,6 +294,24 @@ def activate_membership(cur, member_id: int, row: dict[str, Any], duration_days:
         log.info("Activating member_id=%s from %s for %s days", member_id, start, duration_days)
 
     end = start + timedelta(days=duration_days)
+    erp_sale_serial = str(row["SerialNumber"])
+
+    # An ERP restore can reset SerialNumber sequences, so a serial that once
+    # belonged to one member's sale can later be reused by a completely
+    # different member's brand-new sale. gym_memberships.erp_sale_serial is
+    # UNIQUE, so ON CONFLICT would otherwise silently overwrite the ORIGINAL
+    # member's membership row with the new member's data. Detect that and
+    # give the new sale its own disambiguated serial instead of colliding.
+    cur.execute("SELECT member_id FROM gym_memberships WHERE erp_sale_serial = %s", (erp_sale_serial,))
+    existing_owner = cur.fetchone()
+    if existing_owner and existing_owner[0] != member_id:
+        original_serial = erp_sale_serial
+        erp_sale_serial = disambiguate_serial(cur, original_serial)
+        log.warning(
+            "erp_sale_serial=%s already belongs to member_id=%s (pre-restore sale) — "
+            "activating member_id=%s under disambiguated serial=%s instead",
+            original_serial, existing_owner[0], member_id, erp_sale_serial,
+        )
 
     cur.execute(
         """
@@ -277,7 +334,7 @@ def activate_membership(cur, member_id: int, row: dict[str, Any], duration_days:
         """,
         (
             member_id,
-            str(row["SerialNumber"]),
+            erp_sale_serial,
             row["ProductID"],
             row["ProductName"],
             duration_days,
@@ -549,6 +606,43 @@ def fetch_sales(erp_conn, config: Config) -> list[dict[str, Any]]:
     return rows
 
 
+def detect_stale_serials(gym_conn, rows: list[dict[str, Any]], processed_serials: set[str]) -> set[str]:
+    """A serial marked 'processed' can get reused by a brand-new, unrelated
+    sale after an ERP restore (SerialNumber sequences aren't guaranteed
+    unique across a restore) — the plain 'already in processed_serials' check
+    would then silently skip that new sale forever. Detect it by comparing
+    each already-processed serial's CURRENT ERP VoucherDate against the most
+    recent sync_log record on file for it: a mismatch means the serial now
+    belongs to a different transaction and should be reprocessed. One batched
+    query per cycle, not one per row."""
+    candidates = {
+        str(row["SerialNumber"]): row["VoucherDate"]
+        for row in rows
+        if str(row["SerialNumber"]) in processed_serials
+    }
+    if not candidates:
+        return set()
+
+    with gym_conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT DISTINCT ON (erp_sale_serial) erp_sale_serial, raw_data->>'VoucherDate'
+            FROM sync_log
+            WHERE erp_sale_serial = ANY(%s)
+            ORDER BY erp_sale_serial, sync_at DESC
+            """,
+            (list(candidates.keys()),),
+        )
+        on_file = dict(cur.fetchall())
+
+    stale: set[str] = set()
+    for serial, current_voucher_date in candidates.items():
+        on_file_date = on_file.get(serial)
+        if on_file_date is not None and str(on_file_date).strip() != str(current_voucher_date).strip():
+            stale.add(serial)
+    return stale
+
+
 def run_sync(config: Config, processed_serials: set[str]) -> None:
     log.info("Sync cycle start")
 
@@ -593,7 +687,19 @@ def run_sync(config: Config, processed_serials: set[str]) -> None:
 
         all_rows = fetch_sales(erp_conn, config)
 
-        new_rows = [row for row in all_rows if str(row["SerialNumber"]) not in processed_serials]
+        stale_serials = detect_stale_serials(gym_conn, all_rows, processed_serials)
+        if stale_serials:
+            log.warning(
+                "Detected %s serial(s) reused after an ERP restore (VoucherDate changed "
+                "vs on-file record) — reprocessing despite being marked processed: %s",
+                len(stale_serials), sorted(stale_serials),
+            )
+
+        new_rows = [
+            row for row in all_rows
+            if str(row["SerialNumber"]) not in processed_serials
+            or str(row["SerialNumber"]) in stale_serials
+        ]
         log.info("Sync cycle found %s total sales and %s new sales", len(all_rows), len(new_rows))
 
         for row in new_rows:

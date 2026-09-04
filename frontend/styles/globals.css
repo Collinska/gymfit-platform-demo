@@ -704,6 +704,7 @@ a { color: inherit; text-decoration: none; }
 .method-icon         { font-style: normal; }
 .method-icon.face    { color: var(--accent); }
 .method-icon.barcode { color: #3b82f6; }
+.method-icon.qr      { color: #8b5cf6; }
 .method-icon.manual  { color: var(--muted); }
 
 /* ── Sync row in sidebar footer ── */
@@ -763,6 +764,33 @@ a { color: inherit; text-decoration: none; }
 }
 .kiosk-scan input:focus { border-color: var(--accent); }
 
+.kiosk-camera { display: grid; gap: 10px; justify-items: center; margin-top: 4px; }
+.kiosk-camera-toggle {
+  min-height: 40px;
+  padding: 0 18px;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  background: rgba(15,23,42,0.9);
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.kiosk-camera-toggle:hover { border-color: #475569; }
+.kiosk-camera-toggle.on { border-color: var(--accent); color: var(--accent); }
+.kiosk-camera-preview {
+  width: 220px;
+  height: 165px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #334155;
+  background: #000;
+}
+.kiosk-camera-preview video { width: 100%; height: 100%; object-fit: cover; }
+.kiosk-camera-error { color: #f87171; font-size: 12px; max-width: 320px; text-align: center; }
+.kiosk-camera-hint { color: #64748b; font-size: 11px; max-width: 320px; text-align: center; }
+
 .kiosk-icon {
   width: 120px;
   height: 120px;
@@ -795,6 +823,8 @@ a { color: inherit; text-decoration: none; }
 .kiosk-result.expired   { border-top: 4px solid #ef4444; }
 .kiosk-result.expired h3 { color: #ef4444; }
 .kiosk-result.frozen  h3 { color: #f59e0b; }
+.kiosk-result.no_membership   { border-top: 4px solid #64748b; }
+.kiosk-result.no_membership h3 { color: #94a3b8; }
 
 .countdown-bar {
   position: absolute;

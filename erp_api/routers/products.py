@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from db import erp_conn
+import demo_mode
 
 log = logging.getLogger("erp_api.products")
 router = APIRouter(prefix="/erp/products", tags=["products"])
@@ -44,6 +45,9 @@ def get_stock_levels(warehouse_id: int = 10, location_id: int = 15):
     """Live on-hand quantity for every stocked good (ItemType=164), summed
     across batch/lot rows, at the given warehouse/location. Powers the POS
     stock badges. One round-trip; always reflects the live ERP."""
+    if demo_mode.DEMO_MODE:
+        return demo_mode.stock_levels()
+
     sql = """
         SELECT s.ProductID, SUM(s.Quantity) AS Qty
         FROM Stock s
@@ -72,6 +76,9 @@ def get_product_stock(
     warehouse_id: int = 10,
     location_id:  int = 15,
 ):
+    if demo_mode.DEMO_MODE:
+        return {"product_id": product_id, "quantity": demo_mode.product_stock(product_id)}
+
     try:
         with erp_conn() as conn:
             cur = conn.cursor()
@@ -96,6 +103,9 @@ def get_product_stock(
 
 @router.get("", response_model=ProductsResponse)
 def list_products() -> ProductsResponse:
+    if demo_mode.DEMO_MODE:
+        return ProductsResponse(**demo_mode.list_products())
+
     sql = """
         SELECT
             rmc.MenuID, rmm.MenuName,

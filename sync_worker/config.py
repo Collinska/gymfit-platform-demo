@@ -80,8 +80,15 @@ def mask_secret(value: str, visible: int = 4) -> str:
 
 
 def load_env_file() -> None:
+    # No .env file is expected/required in a cloud deployment (Railway etc.)
+    # — those inject real env vars straight into the process, and .env files
+    # are (correctly) gitignored so none exists in the deployed container.
+    # Only the local dev workflow relies on an actual file; fall back to
+    # whatever's already in os.environ everywhere else, same as db.py already
+    # does for the ERP connection.
     if not ENV_PATH.exists():
-        raise ConfigError([f"Missing .env file: {ENV_PATH}"])
+        log.info("No .env file at %s — using process environment variables directly", ENV_PATH)
+        return
 
     loaded = load_dotenv(dotenv_path=ENV_PATH, override=True)
     if not loaded:

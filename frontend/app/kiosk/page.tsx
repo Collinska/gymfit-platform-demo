@@ -1,9 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import jsQR from "jsqr";
 import { Avatar, daysRemaining, Dict, fetchJson, formatDate, formatTime, memberName, statusValue } from "@/components/dashboard/dashboard-widgets";
 
 type KioskState = "idle" | "found" | "not-found";
+
+// Re-scanning the exact same code while it's still in frame (or during the
+// result-modal dismiss window) would re-trigger check-in; skip repeats within
+// this window. New scans of a DIFFERENT code are never blocked by this.
+const RESCAN_COOLDOWN_MS = 4000;
 
 export default function KioskPage() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -14,6 +20,22 @@ export default function KioskPage() {
   const [member, setMember] = useState<Dict | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
   const [countdown, setCountdown] = useState(0);
+
+  // ── Camera QR scanning ──────────────────────────────────────────────────
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const lastScanRef = useRef<{ value: string; at: number } | null>(null);
+  // rAF loop reads this instead of `state` directly — the loop is a long-lived
+  // closure and would otherwise see a stale "idle" forever.
+  const stateRef = useRef<KioskState>("idle");
+  const [cameraOn, setCameraOn] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   useEffect(() => {
     setMounted(true);
@@ -54,7 +76,22 @@ export default function KioskPage() {
     inputRef.current?.focus();
   }
 
-  async function lookup(value: string) {
+  const stopCamera = useCallback(() => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+    setCameraOn(false);
+  }, []);
+
+  // Stop the camera on unmount so the device light doesn't stay on if staff
+  // navigate away from the kiosk screen.
+  useEffect(() => stopCamera, [stopCamera]);
+
+  async function lookup(value: string, method: "barcode" | "qr" = "barcode") {
     const cardId = value.trim();
     if (!cardId) return;
     try {
@@ -80,8 +117,12 @@ export default function KioskPage() {
         body: JSON.stringify({
           member_id: json.member.id,
           membership_id: currentMembership.id ?? null,
-          method: "barcode",
+          method,
           notes: isActive ? null : "Access denied — no active membership",
+          // Per request: check-in time follows THIS kiosk device's own clock,
+          // not the DB server's now() — so it tracks whatever the device says,
+          // correct or not.
+          checkin_at: new Date().toISOString(),
         }),
       }).catch(() => {});
     } catch {
@@ -93,6 +134,63 @@ export default function KioskPage() {
   function onChange(value: string) {
     setScanValue(value);
     if (value.length >= 13) lookup(value);
+  }
+
+  async function startCamera() {
+    setCameraError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      setCameraOn(true);
+      rafRef.current = requestAnimationFrame(scanFrame);
+    } catch (err) {
+      const name = err instanceof DOMException ? err.name : "";
+      setCameraError(
+        name === "NotAllowedError"
+          ? "Camera permission denied. Allow camera access in the browser and try again."
+          : name === "NotFoundError"
+            ? "No camera found on this device."
+            : "Could not start the camera.",
+      );
+      setCameraOn(false);
+    }
+  }
+
+  // Recursive requestAnimationFrame loop: grab a video frame onto the hidden
+  // canvas, run jsQR on it, and — on a successful decode of a QR the member
+  // profile generates (same value the kiosk already looks up by) — feed it
+  // through the exact same `lookup()` path as the barcode-scanner / typed
+  // input, so check-in behaves identically regardless of scan method.
+  function scanFrame() {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (video && canvas && video.readyState === video.HAVE_ENOUGH_DATA) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(frame.data, frame.width, frame.height);
+        if (code && code.data) {
+          const now = Date.now();
+          const last = lastScanRef.current;
+          const isRepeat = last && last.value === code.data && now - last.at < RESCAN_COOLDOWN_MS;
+          if (!isRepeat && stateRef.current === "idle") {
+            lastScanRef.current = { value: code.data, at: now };
+            lookup(code.data, "qr");
+          }
+        }
+      }
+    }
+    rafRef.current = requestAnimationFrame(scanFrame);
   }
 
   const name = member ? memberName(member) : "";
@@ -149,6 +247,28 @@ export default function KioskPage() {
                 placeholder="Scan card or type member ID..."
               />
             </label>
+
+            <div className="kiosk-camera">
+              <button
+                type="button"
+                className={`kiosk-camera-toggle${cameraOn ? " on" : ""}`}
+                onClick={() => (cameraOn ? stopCamera() : startCamera())}
+              >
+                {cameraOn ? "📷 Camera scan ON — tap to stop" : "📷 Scan QR with camera"}
+              </button>
+
+              {/* Hidden until active — the video feed itself is the preview;
+                  a separate off-screen canvas is used purely for frame decoding. */}
+              <div className="kiosk-camera-preview" hidden={!cameraOn}>
+                <video ref={videoRef} muted playsInline />
+              </div>
+              <canvas ref={canvasRef} style={{ display: "none" }} />
+
+              {cameraError ? <p className="kiosk-camera-error">{cameraError}</p> : null}
+              {cameraOn && !cameraError ? (
+                <p className="kiosk-camera-hint">Hold the membership card&apos;s QR code up to the camera.</p>
+              ) : null}
+            </div>
           </footer>
         </div>
         {state !== "idle" ? (
@@ -185,7 +305,15 @@ export default function KioskPage() {
                     </div>
                   )
                 ) : null}
-                <h3>{status === "active" ? "ACCESS GRANTED" : status === "frozen" ? "MEMBERSHIP FROZEN — SEE RECEPTION" : "MEMBERSHIP EXPIRED — PLEASE RENEW"}</h3>
+                <h3>
+                  {status === "active"
+                    ? "ACCESS GRANTED"
+                    : status === "frozen"
+                      ? "MEMBERSHIP FROZEN — SEE RECEPTION"
+                      : status === "no_membership"
+                        ? "NO MEMBERSHIP ON FILE — SEE RECEPTION"
+                        : "MEMBERSHIP EXPIRED — PLEASE RENEW"}
+                </h3>
                 <button className="btn btn-sm">CHECK OUT</button>
               </>
             ) : (

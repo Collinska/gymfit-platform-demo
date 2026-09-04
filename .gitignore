@@ -1,6 +1,9 @@
 # Environment files — never commit real secrets.
 **/.env
 **/.env.local
+**/.env.*
+!**/.env.example
+!**/.env.*.example
 
 # Node / Next.js
 **/node_modules/

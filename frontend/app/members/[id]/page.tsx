@@ -137,6 +137,109 @@ function PhotoControl({
   );
 }
 
+type ContractStatus = "not_generated" | "generated" | "signed";
+
+const CONTRACT_STATUS_CFG: Record<ContractStatus, { label: string; cls: string }> = {
+  not_generated: { label: "Not Generated",              cls: "bg-slate-100 text-slate-500 border-slate-200" },
+  generated:     { label: "Generated — Awaiting Signature", cls: "bg-amber-50 text-amber-700 border-amber-200" },
+  signed:        { label: "Signed",                      cls: "bg-teal-50  text-teal-700  border-teal-200" },
+};
+
+function ContractCard({
+  memberKey, initialStatus, initialSignedUrl,
+}: {
+  memberKey: string;
+  initialStatus: string | null | undefined;
+  initialSignedUrl: string | null | undefined;
+}) {
+  const [status, setStatus] = useState<ContractStatus>(
+    (initialStatus as ContractStatus) in CONTRACT_STATUS_CFG ? (initialStatus as ContractStatus) : "not_generated",
+  );
+  const [signedUrl, setSignedUrl] = useState<string | null>(initialSignedUrl ?? null);
+  const [generating, setGenerating] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const cfg = CONTRACT_STATUS_CFG[status];
+
+  async function generate() {
+    setGenerating(true); setErr(null);
+    try {
+      const res = await fetch(`/api/members/${memberKey}/contract/generate`, { cache: "no-store" });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error ?? "Contract generation failed");
+      setStatus("generated");
+      window.open(d.pdf_url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Contract generation failed");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  async function uploadSigned(file: File) {
+    setErr(null);
+    const okType = file.type === "application/pdf" || file.type.startsWith("image/");
+    if (!okType) { setErr("PDF or image files only"); return; }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`/api/members/${memberKey}/contract/upload`, { method: "POST", body: fd });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error ?? "Upload failed");
+      setStatus("signed");
+      setSignedUrl(d.signed_url);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-2xl shadow-ios p-5">
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Contract</h3>
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border whitespace-nowrap ${cfg.cls}`}>
+          {cfg.label}
+        </span>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <button onClick={generate} disabled={generating} className="ios-btn-primary w-full text-sm">
+          {generating ? "Generating…" : status === "not_generated" ? "Generate Contract" : "Regenerate Contract"}
+        </button>
+
+        <button onClick={() => fileRef.current?.click()} disabled={uploading} className="ios-btn-secondary w-full text-sm">
+          {uploading ? "Uploading…" : "Upload Signed Contract"}
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/pdf,image/jpeg,image/png"
+          className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadSigned(f); e.target.value = ""; }}
+        />
+
+        {status === "signed" && signedUrl ? (
+          <a
+            href={signedUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-teal-600 hover:text-teal-700 text-center mt-1"
+          >
+            View Signed Contract →
+          </a>
+        ) : null}
+
+        {err ? <p className="text-xs text-red-500 text-center">{err}</p> : null}
+      </div>
+    </div>
+  );
+}
+
 export default function MemberDetailPage() {
   const params = useParams<{ id: string }>();
   const [detail, setDetail]   = useState<MemberDetail | null>(null);
@@ -333,11 +436,24 @@ export default function MemberDetailPage() {
                   <button onClick={printQR} className="ios-btn-secondary w-full text-sm mt-3">
                     Print QR
                   </button>
+                  <Link
+                    href={`/members/${params.id}/card`}
+                    className="ios-btn-primary w-full text-sm mt-2 flex items-center justify-center"
+                  >
+                    🪪 View Membership Card
+                  </Link>
                   <p className="mt-2 text-[11px] text-slate-400 leading-snug">
                     Scan at the kiosk to check in. Physical possession = access, same as a card.
                   </p>
                 </div>
               ) : null}
+
+              {/* Contract */}
+              <ContractCard
+                memberKey={String(member.erp_customer_id ?? params.id)}
+                initialStatus={member.contract_status as string | null | undefined}
+                initialSignedUrl={member.signed_contract_url as string | null | undefined}
+              />
             </aside>
 
             {/* ── Right panel ── */}
@@ -423,6 +539,7 @@ export default function MemberDetailPage() {
                           const methodColors: Record<string, string> = {
                             barcode: "bg-slate-100 text-slate-600",
                             face:    "bg-teal-50 text-teal-700",
+                            qr:      "bg-violet-50 text-violet-700",
                             manual:  "bg-slate-200 text-slate-700",
                           }
                           const methodCls = methodColors[String(row.method ?? "")] ?? "bg-slate-100 text-slate-500"

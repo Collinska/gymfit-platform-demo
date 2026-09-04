@@ -252,6 +252,7 @@ export function ExpiringSoonTable({ rows, showView = false }: { rows: Dict[]; sh
 export function methodIcon(method: unknown) {
   const value = String(method ?? "manual").toLowerCase();
   if (value.includes("face")) return { icon: "◉", className: "method-icon face", label: "face" };
+  if (value.includes("qr")) return { icon: "▤", className: "method-icon qr", label: "qr" };
   if (value.includes("bar")) return { icon: "▦", className: "method-icon barcode", label: "barcode" };
   return { icon: "✎", className: "method-icon manual", label: "manual" };
 }

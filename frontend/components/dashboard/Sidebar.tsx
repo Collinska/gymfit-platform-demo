@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useClickSound } from "@/hooks/useClickSound";
+import { DemoBanner } from "@/components/DemoBanner";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useAuth } from "@/components/AuthProvider";
 import { ROLE_LABELS, type Module, type Role } from "@/lib/permissions";
@@ -120,6 +121,8 @@ export function Sidebar({ syncStatus = "active", lastSyncTime = "Just now" }: Si
   }
 
   return (
+    <>
+    <DemoBanner />
     <aside className="flex flex-col h-screen sticky top-0 w-[240px] shrink-0 overflow-hidden bg-[linear-gradient(180deg,#1f2a2a,#243130)] border-r border-white/5 shadow-[2px_0_24px_rgba(0,0,0,0.15)]">
 
       {/* ── Brand ── */}
@@ -277,5 +280,6 @@ export function Sidebar({ syncStatus = "active", lastSyncTime = "Just now" }: Si
         </div>
       </div>
     </aside>
+    </>
   );
 }

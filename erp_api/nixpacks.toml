@@ -1,0 +1,8 @@
+# pyodbc is a C extension that needs the unixODBC headers to COMPILE during
+# `pip install` — without this, the Railway build fails outright before the
+# app ever starts, regardless of railway.json being correct. This does NOT
+# make the demo deployment able to reach a real SQL Server (it can't, and
+# doesn't need to — the demo has no ERP behind it); it only lets the pyodbc
+# *package* install successfully so the rest of erp_api can run.
+[phases.setup]
+aptPkgs = ["unixodbc-dev", "unixodbc"]

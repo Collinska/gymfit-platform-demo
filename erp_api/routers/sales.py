@@ -11,6 +11,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from db import erp_conn
+import demo_mode
 
 log = logging.getLogger("erp_api.sales")
 router = APIRouter(prefix="/erp/sales", tags=["sales"])
@@ -58,6 +59,14 @@ def create_sale(body: CreateSaleRequest) -> CreateSaleResponse:
         raise HTTPException(status_code=400, detail="items list must not be empty")
     if body.bill_amount <= 0:
         raise HTTPException(status_code=400, detail="bill_amount must be greater than zero")
+
+    if demo_mode.DEMO_MODE:
+        items = [item.model_dump() for item in body.items]
+        try:
+            result = demo_mode.create_sale(body.customer_id, items, body.bill_amount, body.enforce_stock_check)
+        except demo_mode.DemoOutOfStockError as exc:
+            raise HTTPException(status_code=400, detail={"error": "Out of stock", "items": exc.items})
+        return CreateSaleResponse(**result)
 
     qty_total = sum(item.quantity for item in body.items)
     today = datetime.now()

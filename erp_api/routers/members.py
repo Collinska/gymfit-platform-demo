@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from db import erp_conn
+import demo_mode
 
 log = logging.getLogger("erp_api.members")
 router = APIRouter(prefix="/erp/members", tags=["members"])
@@ -33,6 +34,12 @@ class CreateMemberResponse(BaseModel):
 def create_member(body: CreateMemberRequest) -> CreateMemberResponse:
     if not body.first_name.strip():
         raise HTTPException(status_code=400, detail="first_name is required")
+
+    if demo_mode.DEMO_MODE:
+        result = demo_mode.create_member(
+            body.first_name.strip(), body.last_name.strip(), body.mobile, body.email,
+        )
+        return CreateMemberResponse(**result)
 
     full_name = f"{body.first_name.strip()} {body.last_name.strip()}".strip()
 

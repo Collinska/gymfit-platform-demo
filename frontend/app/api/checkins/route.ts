@@ -72,18 +72,19 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { member_id, membership_id, method, match_score, notes } = body;
+    const { member_id, membership_id, method, match_score, notes, checkin_at } = body;
+
+    // checkin_at is caller-supplied (the kiosk's own device clock) so the
+    // recorded time follows that device rather than the DB server's now() —
+    // per request, so it tracks the kiosk's clock even if that clock is off.
+    // Falls back to the column's own DEFAULT now() when omitted, so any other
+    // caller keeps the previous (server-time) behavior unchanged.
+    const insertRow: Record<string, unknown> = { member_id, membership_id, method, match_score, notes, location_id: 15 };
+    if (checkin_at) insertRow.checkin_at = checkin_at;
 
     const { data, error } = await supabaseAdmin
       .from("gym_checkins")
-      .insert({
-        member_id,
-        membership_id,
-        method,
-        match_score,
-        notes,
-        location_id: 15,
-      })
+      .insert(insertRow)
       .select("*")
       .single();
 

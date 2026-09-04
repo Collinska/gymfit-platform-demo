@@ -8,6 +8,7 @@ import pyodbc
 from fastapi import APIRouter, HTTPException, Query
 
 from db import erp_conn
+import demo_mode
 
 log = logging.getLogger("erp_api.erp_members")
 router = APIRouter(prefix="/erp/members", tags=["members"])
@@ -15,6 +16,9 @@ router = APIRouter(prefix="/erp/members", tags=["members"])
 
 @router.get("/search")
 def search_members(q: str = Query(..., min_length=1)):
+    if demo_mode.DEMO_MODE:
+        return demo_mode.search_members(q)
+
     pattern = f"%{q}%"
     sql = """
         SELECT TOP 10
@@ -55,6 +59,12 @@ def search_members(q: str = Query(..., min_length=1)):
 
 @router.get("/{customer_id}/balance")
 def get_member_balance(customer_id: str):
+    if demo_mode.DEMO_MODE:
+        result = demo_mode.member_balance(customer_id)
+        if result is None:
+            raise HTTPException(status_code=404, detail=f"Member {customer_id!r} not found")
+        return result
+
     sql = """
         SELECT
             cm.CustomerID, cm.FirstName, cm.LastName,
