@@ -19,17 +19,13 @@ matches the real GL sense of a deposit crediting the member's account)."""
 from __future__ import annotations
 
 import os
-import sys
 from datetime import date, datetime
 from typing import Any, Optional
 
 import psycopg2
 import psycopg2.extras
 
-_SYNC_WORKER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sync_worker")
-if _SYNC_WORKER not in sys.path:
-    sys.path.insert(0, os.path.abspath(_SYNC_WORKER))
-from config import build_config  # noqa: E402
+from gym_db import gym_conn_str
 
 DEMO_MODE = os.getenv("DEMO_MODE", "false").strip().lower() == "true"
 ACCOUNT_ID_OFFSET = 900_000
@@ -46,7 +42,7 @@ class DemoOutOfStockError(Exception):
 
 
 def gym_conn():
-    return psycopg2.connect(**build_config().gym_conn_str, sslmode="require")
+    return psycopg2.connect(**gym_conn_str(), sslmode="require")
 
 
 def dict_cur(conn):

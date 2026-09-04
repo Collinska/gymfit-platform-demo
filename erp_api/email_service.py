@@ -1,24 +1,15 @@
 """Reusable email helper — reads SMTP config from Supabase platform_settings
-and sends via smtplib. Supabase connection is reused from the sync_worker config."""
+and sends via smtplib. Supabase connection via gym_db.gym_conn_str()."""
 
 from __future__ import annotations
 
-import os
-import sys
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 import psycopg2
 
-# The Supabase connection details live in sync_worker/config.py (gym_conn_str).
-_SYNC_WORKER = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sync_worker"
-)
-if _SYNC_WORKER not in sys.path:
-    sys.path.insert(0, _SYNC_WORKER)
-
-from config import build_config  # noqa: E402
+from gym_db import gym_conn_str
 
 
 def get_smtp_settings() -> dict:
@@ -27,8 +18,7 @@ def get_smtp_settings() -> dict:
     psycopg2 returns jsonb already parsed into native Python types
     (str/int/bool), so no manual json.loads is needed — use rows[key] directly.
     """
-    config = build_config()
-    conn = psycopg2.connect(**config.gym_conn_str, sslmode="require")
+    conn = psycopg2.connect(**gym_conn_str(), sslmode="require")
     try:
         with conn.cursor() as cur:
             cur.execute(

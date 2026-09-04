@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import logging
 import os
-import sys
 import urllib.error
 import urllib.request
 from datetime import date, datetime
@@ -28,10 +27,7 @@ import demo_mode
 # Ensure SUPABASE_URL / SUPABASE_SERVICE_KEY from erp_api/.env are available.
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
 
-_SYNC_WORKER = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sync_worker")
-if _SYNC_WORKER not in sys.path:
-    sys.path.insert(0, _SYNC_WORKER)
-from config import build_config  # noqa: E402
+from gym_db import gym_conn_str  # noqa: E402
 
 log = logging.getLogger("erp_api.contracts")
 router = APIRouter(prefix="/contracts", tags=["contracts"])
@@ -81,7 +77,7 @@ def _storage_upload(path: str, data: bytes, content_type: str) -> str:
 # ── Supabase Postgres (gym_members) ─────────────────────────────────────────
 
 def _gym_conn():
-    return psycopg2.connect(**build_config().gym_conn_str, sslmode="require")
+    return psycopg2.connect(**gym_conn_str(), sslmode="require")
 
 
 def _update_contract_status(customer_id: str, **fields) -> None:

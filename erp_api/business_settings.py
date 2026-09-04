@@ -3,16 +3,11 @@ cached briefly so receipts/wraps don't hit the DB on every render."""
 
 from __future__ import annotations
 
-import os
-import sys
 import time
 
 import psycopg2
 
-_SYNC_WORKER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sync_worker")
-if _SYNC_WORKER not in sys.path:
-    sys.path.insert(0, os.path.abspath(_SYNC_WORKER))
-from config import build_config  # noqa: E402
+from gym_db import gym_conn_str
 
 _CACHE: dict = {"data": None, "ts": 0.0}
 _TTL = 60.0
@@ -55,7 +50,7 @@ def get_business_details() -> dict:
 
     data = dict(_DEFAULTS)
     try:
-        conn = psycopg2.connect(**build_config().gym_conn_str, sslmode="require")
+        conn = psycopg2.connect(**gym_conn_str(), sslmode="require")
         with conn.cursor() as cur:
             cur.execute("SELECT key, value FROM platform_settings WHERE key LIKE 'biz_%'")
             rows = dict(cur.fetchall())  # jsonb → parsed python (strings)

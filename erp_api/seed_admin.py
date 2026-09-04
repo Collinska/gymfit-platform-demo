@@ -30,8 +30,7 @@ ADMIN_NAME     = "System Admin"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_ENV = os.path.join(os.path.dirname(HERE), "frontend", ".env.local")
-sys.path.insert(0, os.path.join(os.path.dirname(HERE), "sync_worker"))
-from config import build_config  # noqa: E402
+from gym_db import gym_conn_str  # noqa: E402
 
 
 def _load_frontend_env() -> dict:
@@ -91,7 +90,7 @@ def main() -> None:
         print(f"Reusing existing auth user {ADMIN_EMAIL} -> {auth_id}")
 
     # 2) Upsert the staff row linked to that auth_id
-    conn = psycopg2.connect(**build_config().gym_conn_str, sslmode="require")
+    conn = psycopg2.connect(**gym_conn_str(), sslmode="require")
     conn.autocommit = True
     with conn.cursor() as cur:
         cur.execute("UPDATE staff SET auth_id=%s, name=%s, role='admin', is_active=true WHERE email=%s",

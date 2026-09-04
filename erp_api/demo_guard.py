@@ -11,17 +11,12 @@ untrustworthy for this."""
 
 from __future__ import annotations
 
-import os
-import sys
 import time
 
 import psycopg2
 from fastapi import HTTPException
 
-_SYNC_WORKER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sync_worker")
-if _SYNC_WORKER not in sys.path:
-    sys.path.insert(0, os.path.abspath(_SYNC_WORKER))
-from config import build_config  # noqa: E402
+from gym_db import gym_conn_str
 
 _CACHE: dict = {"checked_at": 0.0, "expired": False, "is_demo": False}
 _TTL = 60.0  # seconds — matches business_settings.py's caching convention
@@ -32,7 +27,7 @@ def _check_demo_status() -> tuple[bool, bool]:
     not expired) so a misconfigured or production deployment is never
     accidentally locked out by this feature."""
     try:
-        conn = psycopg2.connect(**build_config().gym_conn_str, sslmode="require")
+        conn = psycopg2.connect(**gym_conn_str(), sslmode="require")
         try:
             with conn.cursor() as cur:
                 cur.execute(

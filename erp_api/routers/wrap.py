@@ -18,13 +18,7 @@ from pydantic import BaseModel
 from db import erp_conn
 import demo_mode
 
-# Reuse the Supabase connection details from sync_worker/config.py
-_SYNC_WORKER = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sync_worker"
-)
-if _SYNC_WORKER not in sys.path:
-    sys.path.insert(0, _SYNC_WORKER)
-from config import build_config  # noqa: E402
+from gym_db import gym_conn_str  # noqa: E402
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from wrap_template import render_wrap_html  # noqa: E402
@@ -46,7 +40,7 @@ _PAID = """(
 
 
 def _gym_conn():
-    return psycopg2.connect(**build_config().gym_conn_str, sslmode="require")
+    return psycopg2.connect(**gym_conn_str(), sslmode="require")
 
 
 def _month_bounds(month: str) -> tuple[date, date]:

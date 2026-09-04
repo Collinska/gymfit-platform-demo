@@ -7,7 +7,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-import sys
 import urllib.request
 import urllib.error
 from typing import Optional
@@ -21,11 +20,8 @@ from pydantic import BaseModel
 # Ensure SUPABASE_URL / SUPABASE_SERVICE_KEY from erp_api/.env are available.
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
 
-# Supabase connection (staff table) reused from sync_worker config.
-_SYNC_WORKER = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sync_worker")
-if _SYNC_WORKER not in sys.path:
-    sys.path.insert(0, _SYNC_WORKER)
-from config import build_config  # noqa: E402
+# Supabase connection (staff table) via gym_db.gym_conn_str().
+from gym_db import gym_conn_str  # noqa: E402
 
 log = logging.getLogger("erp_api.staff")
 router = APIRouter(prefix="/staff", tags=["staff"])
@@ -61,7 +57,7 @@ def _auth_admin(method: str, path: str, body: dict | None = None) -> tuple[int, 
 
 
 def _gym_conn():
-    return psycopg2.connect(**build_config().gym_conn_str, sslmode="require")
+    return psycopg2.connect(**gym_conn_str(), sslmode="require")
 
 
 def _staff_row(cur, staff_id: str) -> Optional[dict]:
