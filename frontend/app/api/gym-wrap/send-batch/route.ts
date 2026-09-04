@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireModule } from "@/lib/api-auth";
 
 export const dynamic = "force-dynamic";
-// Throttled batch send can run for a while.
-export const maxDuration = 800;
+// Throttled batch send can run for a while. Capped at 300 (not 800) because
+// that's the Vercel Hobby plan's hard ceiling — a higher value fails the
+// deploy outright rather than degrading gracefully. At erp_api's default 3s
+// throttle that's ~100 recipients per batch, well beyond the demo's 25
+// seeded members; raise it if the plan is ever upgraded.
+export const maxDuration = 300;
 
 const ERP_BASE = process.env.ERP_API_URL ?? "http://127.0.0.1:8000";
 
