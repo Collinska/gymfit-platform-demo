@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import io
 import logging
+import os
 import subprocess
 import traceback
 import urllib.request
@@ -21,7 +22,15 @@ from business_settings import get_business_details
 log = logging.getLogger("erp_api.print_receipt")
 router = APIRouter(prefix="/erp/print", tags=["print"])
 
-RECEIPTS_DIR = Path(r"C:\Users\HP\Documents\New project\gymfit-platform\receipts")
+# Hardcoded absolute Windows path here previously (C:\Users\HP\...) — worked
+# only on that one machine; on any other host (Linux container, another
+# dev's machine) it either fails outright or, on POSIX, "succeeds" by
+# creating a garbage directory literally named with backslashes, since
+# Path() doesn't treat backslash as a separator there. RECEIPTS_DIR is a
+# runtime-artifact dir (gitignored — see root .gitignore's "receipts/"),
+# so a portable default relative to this file is enough; RECEIPTS_DIR env
+# var overrides it if a deployment ever needs somewhere specific.
+RECEIPTS_DIR = Path(os.getenv("RECEIPTS_DIR") or (Path(__file__).resolve().parent.parent / "receipts"))
 RECEIPTS_DIR.mkdir(parents=True, exist_ok=True)
 
 RECEIPT_WIDTH = 226.77  # 80 mm in points
