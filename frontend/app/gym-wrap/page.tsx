@@ -92,7 +92,12 @@ function GymWrapPage() {
   const selectableIds = filtered.filter((m) => m.has_email).map((m) => m.erp_customer_id);
 
   function toggle(id: string) {
-    setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    setSelected((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
   }
   function selectAll() { setSelected(new Set(selectableIds)); }
   function selectNone() { setSelected(new Set()); }

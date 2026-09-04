@@ -5,7 +5,6 @@ import { supabaseAdmin } from '@/lib/supabase'
 export const dynamic = 'force-dynamic'
 
 const DEFAULT_KIOSK_LAUNCH = '2026-06-20'
-const DENIED = '%Access denied%'
 
 const dayMs = 86_400_000
 const iso = (d: Date) => d.toISOString().slice(0, 10)

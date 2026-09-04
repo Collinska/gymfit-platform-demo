@@ -19,8 +19,30 @@ const COLORS = {
 const fmt = (n: number) =>
   'KES ' + (n ?? 0).toLocaleString('en-KE', { minimumFractionDigits: 0 })
 
+type StatusCounts = {
+  active?: number
+  expired?: number
+  frozen?: number
+  no_membership?: number
+  unknown?: number
+}
+type MonthlyRevenuePoint = { month: string; revenue: number; sales?: number }
+type TopPlan = { plan_name: string; count: number; revenue: number }
+type AnalyticsData = {
+  status_counts?: StatusCounts
+  revenue_this_month?: number
+  revenue_last_month?: number
+  revenue_change_pct?: number
+  sales_this_month?: number
+  sales_last_month?: number
+  monthly_revenue?: MonthlyRevenuePoint[]
+  top_plans?: TopPlan[]
+  new_this_month?: number
+  new_last_month?: number
+}
+
 function AnalyticsPage() {
-  const [data, setData] = useState<any>(null)
+  const [data, setData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -137,7 +159,7 @@ function AnalyticsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(data?.top_plans ?? []).map((p: any, i: number) => (
+                  {(data?.top_plans ?? []).map((p: TopPlan, i: number) => (
                     <tr key={i} className="border-b border-slate-50">
                       <td className="py-2 text-slate-700 truncate max-w-[140px]">{p.plan_name}</td>
                       <td className="py-2 text-right text-slate-600">{p.count}</td>

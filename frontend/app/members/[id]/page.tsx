@@ -7,8 +7,6 @@ import { QRCodeSVG } from "qrcode.react";
 import { GymWrapModal } from "@/components/GymWrapModal";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import {
-  Avatar,
-  calculateDuration,
   daysRemaining,
   Dict,
   fetchJson,

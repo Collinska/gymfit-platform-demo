@@ -17,6 +17,32 @@ type UserRow = {
   TotalSales: number
 }
 
+// Raw API rows come shaped either like the real ERP (PascalCase) or, in
+// DEMO_MODE, like the Supabase-backed swap-in (snake_case) — see erp_api's
+// day_audit()/demo_mode.day_audit(). Both variants are optional here since
+// each row only ever has one or the other, never both.
+type MOPRowRaw = {
+  PaymentMethod?: string
+  payment_method?: string
+  TransactionCount?: number
+  transaction_count?: number
+  TotalAmount?: number
+  total_amount?: number
+}
+
+type UserRowRaw = {
+  UserName?: string
+  user_name?: string
+  InvoiceCount?: number
+  invoice_count?: number
+  TotalNet?: number
+  total_net?: number
+  TotalTax?: number
+  total_tax?: number
+  TotalSales?: number
+  total_sales?: number
+}
+
 function triggerDownload(csv: string, filename: string) {
   const blob = new Blob([csv], { type: 'text/csv' })
   const url  = URL.createObjectURL(blob)
@@ -43,7 +69,7 @@ export default function DayAuditPage() {
       const json = await res.json()
 
       setMopData(
-        (json.deposits_by_mop ?? []).map((r: any) => ({
+        (json.deposits_by_mop ?? []).map((r: MOPRowRaw) => ({
           PaymentMethod:    r.PaymentMethod    ?? r.payment_method    ?? '',
           TransactionCount: r.TransactionCount ?? r.transaction_count ?? 0,
           TotalAmount:      r.TotalAmount      ?? r.total_amount      ?? 0,
@@ -51,7 +77,7 @@ export default function DayAuditPage() {
       )
 
       setUserData(
-        (json.sales_by_user ?? []).map((r: any) => ({
+        (json.sales_by_user ?? []).map((r: UserRowRaw) => ({
           UserName:     r.UserName     ?? r.user_name     ?? '',
           InvoiceCount: r.InvoiceCount ?? r.invoice_count ?? 0,
           TotalNet:     r.TotalNet     ?? r.total_net     ?? 0,
